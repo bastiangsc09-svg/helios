@@ -174,10 +174,15 @@ struct OrreryView: View {
     // MARK: - Canvas Rendering
 
     private func drawOrbits(ctx: inout GraphicsContext, center: CGPoint, maxR: Double, time: Double) {
-        let orbits: [(radius: Double, pct: Double, color: Color, baseDrift: Double, pSize: Double, label: String)] = [
-            (maxR * 0.45, state.fiveHourPct, Theme.sessionOrbit, 0.05, 6, "Session"),
-            (maxR * 0.70, state.sevenDayPct, Theme.weeklyOrbit, 0.03, 9, "Weekly"),
-            (maxR * 1.00, state.outerOrbitPct, Theme.outerOrbit, 0.02, 12, state.outerOrbitLabel),
+        // Resolve planet textures once per frame
+        let sessionTex = ctx.resolve(Image("planet_session"))
+        let weeklyTex = ctx.resolve(Image("planet_weekly"))
+        let outerTex = ctx.resolve(Image("planet_outer"))
+
+        let orbits: [(radius: Double, pct: Double, color: Color, baseDrift: Double, pSize: Double, label: String, texture: GraphicsContext.ResolvedImage)] = [
+            (maxR * 0.45, state.fiveHourPct, Theme.sessionOrbit, 0.05, 6, "Session", sessionTex),
+            (maxR * 0.70, state.sevenDayPct, Theme.weeklyOrbit, 0.03, 9, "Weekly", weeklyTex),
+            (maxR * 1.00, state.outerOrbitPct, Theme.outerOrbit, 0.02, 12, state.outerOrbitLabel, outerTex),
         ]
 
         // Orbital rings — conic gradient for directional light + soft glow
@@ -298,6 +303,15 @@ struct OrreryView: View {
                     endRadius: ps * 1.4
                 )
             )
+
+            // Planet texture overlay — clipped to planet circle, blended on top of 3D gradient
+            let planetRect = CGRect(x: px - ps, y: py - ps, width: ps * 2, height: ps * 2)
+            ctx.drawLayer { texCtx in
+                texCtx.clip(to: Circle().path(in: planetRect))
+                texCtx.blendMode = .overlay
+                texCtx.opacity = 0.4
+                texCtx.draw(orbit.texture, in: planetRect)
+            }
 
             // Specular highlight — bright spot near light source
             let specX = px - ps * 0.35

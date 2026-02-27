@@ -25,6 +25,7 @@
 		B200000000000000000116 /* BreakdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000016; };
 		B200000000000000000117 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000017; };
 		B200000000000000000118 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000018; };
+		B200000000000000000119 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B200000000000000000021; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +49,7 @@
 		B200000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B200000000000000000019 /* Helios.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Helios.entitlements; sourceTree = "<group>"; };
 		B200000000000000000020 /* Helios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Helios.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B200000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,17 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B200000000000000000302 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B200000000000000000119 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
 		B200000000000000000200 = {
@@ -91,6 +104,7 @@
 				B200000000000000000017 /* MenuBarController.swift */,
 				B200000000000000000018 /* SettingsView.swift */,
 				B200000000000000000019 /* Helios.entitlements */,
+				B200000000000000000021 /* Assets.xcassets */,
 			);
 			path = Helios;
 			sourceTree = "<group>";
@@ -112,6 +126,7 @@
 			buildPhases = (
 				B200000000000000000300 /* Sources */,
 				B200000000000000000301 /* Frameworks */,
+				B200000000000000000302 /* Resources */,
 			);
 			buildRules = (
 			);
