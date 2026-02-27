@@ -180,7 +180,7 @@ struct OrreryView: View {
             (maxR * 1.00, state.outerOrbitPct, Theme.outerOrbit, 0.02, 12, state.outerOrbitLabel),
         ]
 
-        // Orbital rings
+        // Orbital rings — conic gradient for directional light + soft glow
         for orbit in orbits {
             let ringRect = CGRect(
                 x: center.x - orbit.radius,
@@ -188,10 +188,28 @@ struct OrreryView: View {
                 width: orbit.radius * 2,
                 height: orbit.radius * 2
             )
+            let ringPath = Circle().path(in: ringRect)
+            // Wide faint outer glow
             ctx.stroke(
-                Circle().path(in: ringRect),
-                with: .color(orbit.color.opacity(0.12)),
-                lineWidth: 1
+                ringPath,
+                with: .color(orbit.color.opacity(0.06)),
+                lineWidth: 3
+            )
+            // Conic gradient core — light catches from upper-left
+            ctx.stroke(
+                ringPath,
+                with: .conicGradient(
+                    Gradient(colors: [
+                        orbit.color.opacity(0.25),
+                        orbit.color.opacity(0.06),
+                        orbit.color.opacity(0.03),
+                        orbit.color.opacity(0.06),
+                        orbit.color.opacity(0.25),
+                    ]),
+                    center: center,
+                    angle: .radians(-0.8)
+                ),
+                lineWidth: 0.8
             )
         }
 
@@ -201,9 +219,9 @@ struct OrreryView: View {
             let drift = orbit.baseDrift + urgency * 0.15
             let angle = (orbit.pct / 100.0) * .pi * 2 + time * drift - .pi / 2
 
-            // Trail
-            let trailLen = 0.8
-            let segments = 20
+            // Enhanced comet trail — tapering width, quadratic fade
+            let trailLen = 1.0
+            let segments = 30
             for seg in 0..<segments {
                 let frac = Double(seg) / Double(segments)
                 let a1 = angle - trailLen * (1 - frac)
@@ -218,34 +236,100 @@ struct OrreryView: View {
                     x: center.x + cos(a2) * orbit.radius,
                     y: center.y + sin(a2) * orbit.radius
                 ))
+                let trailOpacity = frac * frac * 0.5
+                let trailWidth = orbit.pSize * (0.8 - frac * 0.55)
                 ctx.stroke(
                     trail,
-                    with: .color(orbit.color.opacity(frac * 0.4)),
-                    lineWidth: orbit.pSize * 0.5
+                    with: .color(orbit.color.opacity(trailOpacity)),
+                    lineWidth: trailWidth
                 )
             }
 
-            // Planet glow
             let px = center.x + cos(angle) * orbit.radius
             let py = center.y + sin(angle) * orbit.radius
             let ps = orbit.pSize
 
+            // Ember sparks — scattered particles drifting off the trail
+            let sparkCount = 15
+            for i in 0..<sparkCount {
+                let sparkPhase = Double(i) / Double(sparkCount)
+                let sparkAngle = angle - sparkPhase * 0.6
+                let scatter = sin(time * 2.5 + Double(i) * 2.4) * ps * 1.8
+                let sparkR = orbit.radius + scatter
+                let sx = center.x + cos(sparkAngle) * sparkR
+                let sy = center.y + sin(sparkAngle) * sparkR
+                let life = max(0, 1.0 - sparkPhase)
+                let sparkSize = ps * 0.2 * life
+                if sparkSize > 0.3 {
+                    ctx.fill(
+                        Circle().path(in: CGRect(x: sx - sparkSize, y: sy - sparkSize, width: sparkSize * 2, height: sparkSize * 2)),
+                        with: .color(orbit.color.opacity(life * 0.5))
+                    )
+                }
+            }
+
+            // Outer corona — wide, soft, urgency-reactive
             let glowOpacity = 0.3 + urgency * 0.4
             let glowRadius = ps * (2 + urgency * 2)
             ctx.fill(
                 Circle().path(in: CGRect(x: px - glowRadius, y: py - glowRadius, width: glowRadius * 2, height: glowRadius * 2)),
                 with: .radialGradient(
-                    Gradient(colors: [orbit.color.opacity(glowOpacity), .clear]),
+                    Gradient(colors: [orbit.color.opacity(glowOpacity), orbit.color.opacity(glowOpacity * 0.3), .clear]),
                     center: CGPoint(x: px, y: py),
                     startRadius: 0,
                     endRadius: glowRadius
                 )
             )
 
-            // Planet core
+            // Planet sphere — 3D radial gradient with light offset
+            let lightX = px - ps * 0.3
+            let lightY = py - ps * 0.3
             ctx.fill(
                 Circle().path(in: CGRect(x: px - ps, y: py - ps, width: ps * 2, height: ps * 2)),
-                with: .color(orbit.color)
+                with: .radialGradient(
+                    Gradient(stops: [
+                        .init(color: .white.opacity(0.9), location: 0.0),
+                        .init(color: orbit.color, location: 0.35),
+                        .init(color: orbit.color.opacity(0.3), location: 0.75),
+                        .init(color: orbit.color.opacity(0.05), location: 1.0),
+                    ]),
+                    center: CGPoint(x: lightX, y: lightY),
+                    startRadius: 0,
+                    endRadius: ps * 1.4
+                )
+            )
+
+            // Specular highlight — bright spot near light source
+            let specX = px - ps * 0.35
+            let specY = py - ps * 0.35
+            let specR = ps * 0.35
+            ctx.fill(
+                Circle().path(in: CGRect(x: specX - specR, y: specY - specR, width: specR * 2, height: specR * 2)),
+                with: .radialGradient(
+                    Gradient(colors: [.white.opacity(0.7), .clear]),
+                    center: CGPoint(x: specX, y: specY),
+                    startRadius: 0,
+                    endRadius: specR
+                )
+            )
+
+            // Atmosphere rim light — bright arc on the sunlit edge
+            var rimPath = Path()
+            rimPath.addArc(
+                center: CGPoint(x: px, y: py),
+                radius: ps - 0.5,
+                startAngle: .radians(-.pi * 0.85),
+                endAngle: .radians(-.pi * 0.15),
+                clockwise: false
+            )
+            ctx.stroke(
+                rimPath,
+                with: .linearGradient(
+                    Gradient(colors: [.clear, orbit.color.opacity(0.8), .white.opacity(0.6), orbit.color.opacity(0.8), .clear]),
+                    startPoint: CGPoint(x: px - ps, y: py - ps),
+                    endPoint: CGPoint(x: px + ps, y: py)
+                ),
+                lineWidth: 1.0
             )
         }
     }

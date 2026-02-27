@@ -37,6 +37,31 @@ struct StarfieldCanvas: View {
                 let time = timeline.date.timeIntervalSinceReferenceDate
                 let bm = brightnessMultiplier
 
+                // Nebula color wash — slow-drifting colored blobs for depth
+                let nebulae: [(hue: Double, xBase: Double, yBase: Double, radius: Double, freq: Double, phase: Double)] = [
+                    (0.75, 0.25, 0.35, 0.30, 0.08, 0.0),    // purple, upper-left
+                    (0.55, 0.70, 0.60, 0.25, 0.06, 2.0),    // teal, lower-right
+                    (0.85, 0.50, 0.25, 0.20, 0.10, 4.5),    // magenta, upper-center
+                ]
+                for neb in nebulae {
+                    let nx = (neb.xBase + sin(time * neb.freq + neb.phase) * 0.05) * size.width
+                    let ny = (neb.yBase + cos(time * neb.freq * 0.7 + neb.phase) * 0.04) * size.height
+                    let nr = neb.radius * min(size.width, size.height)
+                    ctx.fill(
+                        Circle().path(in: CGRect(x: nx - nr, y: ny - nr, width: nr * 2, height: nr * 2)),
+                        with: .radialGradient(
+                            Gradient(colors: [
+                                Color(hue: neb.hue, saturation: 0.6, brightness: 0.4).opacity(0.06 * bm),
+                                Color(hue: neb.hue, saturation: 0.5, brightness: 0.3).opacity(0.02 * bm),
+                                .clear
+                            ]),
+                            center: CGPoint(x: nx, y: ny),
+                            startRadius: 0,
+                            endRadius: nr
+                        )
+                    )
+                }
+
                 for star in stars {
                     let twinkle = (sin(time * star.twinkleSpeed + star.twinkleOffset) + 1) / 2
                     let alpha = star.brightness * (0.3 + 0.7 * twinkle) * bm
@@ -63,6 +88,20 @@ struct StarfieldCanvas: View {
                                 endRadius: gr
                             )
                         )
+                    }
+
+                    // Diffraction spikes on brightest stars
+                    if star.brightness > 0.85 {
+                        let spikeLen = r * 6 * (0.8 + 0.2 * twinkle)
+                        ctx.opacity = alpha * 0.25
+                        var h = Path()
+                        h.move(to: CGPoint(x: px - spikeLen, y: py))
+                        h.addLine(to: CGPoint(x: px + spikeLen, y: py))
+                        ctx.stroke(h, with: .color(.white), lineWidth: 0.5)
+                        var v = Path()
+                        v.move(to: CGPoint(x: px, y: py - spikeLen))
+                        v.addLine(to: CGPoint(x: px, y: py + spikeLen))
+                        ctx.stroke(v, with: .color(.white), lineWidth: 0.5)
                     }
                 }
             }

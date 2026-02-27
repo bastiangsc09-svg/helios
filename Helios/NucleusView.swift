@@ -52,12 +52,22 @@ struct NucleusView: View {
     var body: some View {
         TimelineView(.animation) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
-            // Pulse rate: 0.5Hz (low) → 3Hz (critical)
-            let pulseHz = 0.5 + (utilization / 100.0) * 2.5
-            let pulseScale = 1.0 + sin(t * pulseHz * .pi * 2) * 0.05
-            let rot = t * 0.1
+            // Pulse rate: 0.15Hz (low) → 0.8Hz (critical)
+            let pulseHz = 0.15 + (utilization / 100.0) * 0.65
+            let pulseScale = 1.0 + sin(t * pulseHz * .pi * 2) * 0.04
+            let rot = t * 0.03
 
             ZStack {
+                // Expanding pulse rings — sonar-like energy waves
+                let ringSpeed = 0.1 + (utilization / 100.0) * 0.25
+                ForEach(0..<3, id: \.self) { i in
+                    let phase = fmod(t * ringSpeed + Double(i) / 3.0, 1.0)
+                    Circle()
+                        .stroke(nucleusColor.opacity((1 - phase) * 0.2), lineWidth: 1.5 * (1 - phase))
+                        .frame(width: 40 + phase * 160, height: 40 + phase * 160)
+                        .blendMode(.screen)
+                }
+
                 // Outer corona glow
                 Circle()
                     .fill(
