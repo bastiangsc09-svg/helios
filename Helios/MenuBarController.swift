@@ -37,6 +37,7 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
         popover?.behavior = .transient
         popover?.contentSize = NSSize(width: 280, height: 320)
         popover?.animates = true
+        popover?.appearance = NSAppearance(named: .darkAqua)
     }
 
     @objc private func togglePopover() {
@@ -46,12 +47,38 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
             popover.performClose(nil)
         } else {
             if let state, let engine {
-                popover.contentViewController = NSHostingController(
+                let hosting = NSHostingController(
                     rootView: MenuBarPopoverContent(state: state, engine: engine)
                         .frame(width: 280)
                 )
+                // Make hosting view transparent so the blur shows through
+                hosting.view.wantsLayer = true
+                hosting.view.layer?.backgroundColor = .clear
+                popover.contentViewController = hosting
             }
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+
+            // Hack into the popover's private window after it appears
+            DispatchQueue.main.async {
+                guard let popoverWindow = popover.contentViewController?.view.window else { return }
+                popoverWindow.isOpaque = false
+                popoverWindow.backgroundColor = .clear
+                // Walk the view tree and reconfigure NSVisualEffectViews
+                self.configureVisualEffect(in: popoverWindow.contentView?.superview)
+            }
+        }
+    }
+
+    private func configureVisualEffect(in view: NSView?) {
+        guard let view else { return }
+        if let effectView = view as? NSVisualEffectView {
+            effectView.material = .popover
+            effectView.blendingMode = .behindWindow
+            effectView.state = .active
+            effectView.isEmphasized = true
+        }
+        for subview in view.subviews {
+            configureVisualEffect(in: subview)
         }
     }
 
@@ -151,24 +178,28 @@ struct MenuBarPopoverContent: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
+            // Header with mini nucleus
+            VStack(spacing: 6) {
+                MiniNucleusView(utilization: state.overallUtilization)
+                    .frame(width: 36, height: 36)
+
                 Text("Helios")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Spacer()
+                    .shadow(color: .white.opacity(0.4), radius: 4)
+
                 if state.isLoading {
                     ProgressView()
                         .scaleEffect(0.5)
-                        .frame(width: 16, height: 16)
+                        .frame(width: 12, height: 12)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             // Metrics
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 popoverMetricRow(label: "Session (5h)", pct: Int(state.fiveHourPct), reset: state.fiveHourResetString)
                 popoverMetricRow(label: "Weekly (7d)", pct: Int(state.sevenDayPct), reset: state.sevenDayResetString)
                 popoverMetricRow(label: "Sonnet", pct: Int(state.sonnetPct), reset: nil)
@@ -181,14 +212,16 @@ struct MenuBarPopoverContent: View {
             // Last update
             if let date = state.lastFetch {
                 Text("Updated \(date.formatted(.relative(presentation: .named)))")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.3))
-                    .padding(.top, 10)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.25))
+                    .padding(.top, 12)
             }
 
-            Divider()
-                .overlay(Color.white.opacity(0.08))
-                .padding(.top, 10)
+            // Frosted divider
+            Rectangle()
+                .fill(.white.opacity(0.06))
+                .frame(height: 1)
+                .padding(.top, 12)
 
             // Actions
             HStack(spacing: 0) {
@@ -203,61 +236,121 @@ struct MenuBarPopoverContent: View {
                 }
             }
             .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
         }
-        .background(Color(nsColor: NSColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1)))
+        .background(Color.clear)
     }
 
     private func popoverMetricRow(label: String, pct: Int, reset: String?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.6))
                 Spacer()
                 if let reset, !reset.isEmpty {
                     Text("resets in \(reset)")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.25))
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.3))
                 }
                 Text("\(pct)%")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(colorForPct(pct))
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(Color.forUtilization(Double(pct)))
+                    .shadow(color: Color.forUtilization(Double(pct)).opacity(0.5), radius: 4)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: 2.5)
                         .fill(Color.white.opacity(0.06))
-                        .frame(height: 4)
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(colorForPct(pct))
-                        .frame(width: max(0, geo.size.width * CGFloat(pct) / 100), height: 4)
+                        .frame(height: 5)
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(Color.forUtilization(Double(pct)))
+                        .frame(width: max(0, geo.size.width * CGFloat(pct) / 100), height: 5)
+                        .shadow(color: Color.forUtilization(Double(pct)).opacity(0.6), radius: 6, y: 1)
                 }
             }
-            .frame(height: 4)
+            .frame(height: 5)
         }
     }
 
     private func popoverAction(icon: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, weight: .medium))
                 Text(label)
-                    .font(.system(size: 9))
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.white.opacity(0.5))
+        .foregroundStyle(.white.opacity(0.45))
+    }
+}
+
+// MARK: - Mini Nucleus (for popover header)
+
+struct MiniNucleusView: View {
+    let utilization: Double
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let pulseScale = 1.0 + sin(t * 0.4 * .pi * 2) * 0.03
+            let rot = t * 0.03
+
+            ZStack {
+                // Soft glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [nucleusColor.opacity(0.2), .clear],
+                            center: .center,
+                            startRadius: 6,
+                            endRadius: 18
+                        )
+                    )
+                    .scaleEffect(pulseScale)
+                    .blendMode(.plusLighter)
+
+                // Core with texture
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [coreColor, nucleusColor, nucleusColor.opacity(0.3)],
+                                center: .center,
+                                startRadius: 1,
+                                endRadius: 14
+                            )
+                        )
+
+                    Image("nucleus_texture")
+                        .resizable()
+                        .clipShape(Circle())
+                        .blendMode(.overlay)
+                        .opacity(0.5)
+                        .rotationEffect(.radians(t * 0.02))
+                }
+                .frame(width: 24, height: 24)
+                .scaleEffect(pulseScale)
+            }
+        }
     }
 
-    private func colorForPct(_ pct: Int) -> Color {
-        if pct < 60 { return Color(red: 0.13, green: 0.77, blue: 0.29) }
-        if pct < 85 { return Color(red: 0.98, green: 0.60, blue: 0.09) }
-        return Color(red: 0.94, green: 0.27, blue: 0.27)
+    private var nucleusColor: Color {
+        let t = utilization / 100.0
+        if t < 0.6 {
+            return Color.lerp(Theme.nucleusCool, Theme.nucleusWarm, t: t / 0.6)
+        } else {
+            return Color.lerp(Theme.nucleusWarm, Theme.nucleusHot, t: (t - 0.6) / 0.4)
+        }
+    }
+
+    private var coreColor: Color {
+        Color.lerp(Theme.nucleusCorona, nucleusColor, t: 0.3)
     }
 }
