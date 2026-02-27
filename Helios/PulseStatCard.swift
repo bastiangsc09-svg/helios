@@ -24,7 +24,7 @@ struct PulseStatCard: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(color.opacity(0.06))

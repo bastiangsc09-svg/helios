@@ -6,10 +6,10 @@ enum Theme {
     static let nebulaDark = Color(hex: "0D0D1A")
     static let stardust = Color(hex: "E8E8F0")
 
-    // Usage tier colors
-    static let tierLow = Color(hex: "21C45D")       // green
-    static let tierModerate = Color(hex: "FAA61A")   // amber
-    static let tierCritical = Color(hex: "EF4444")   // red
+    // Usage tier colors (space-themed)
+    static let tierLow = Color(hex: "21C45D")       // solid green — calm
+    static let tierModerate = Color(hex: "FFD54F")   // gold — warming
+    static let tierCritical = Color(hex: "FF4081")   // hot pink — urgent
 
     // Orbital identity colors
     static let sessionOrbit = Color(hex: "00E5FF")   // cyan — 5h session

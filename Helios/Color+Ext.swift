@@ -48,6 +48,7 @@ extension Color {
         if pct < 85 { return Theme.tierModerate }
         return Theme.tierCritical
     }
+
 }
 
 // MARK: - Date Countdown

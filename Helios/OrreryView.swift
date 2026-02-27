@@ -7,27 +7,62 @@ struct OrreryView: View {
 
     var body: some View {
         GeometryReader { geo in
+            let maxR = Swift.min(geo.size.width, geo.size.height) * 0.38
+            let bottomSpace = geo.size.height / 2 - maxR
+            let useBottom = bottomSpace > 70
+
             ZStack {
                 // Usage-responsive starfield
                 StarfieldCanvas(
                     starCount: 300,
                     brightnessMultiplier: 0.4 + (state.overallUtilization / 100.0) * 0.6
                 )
+                .allowsHitTesting(false)
 
                 TimelineView(.animation) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-                    let maxR = Swift.min(geo.size.width, geo.size.height) * 0.38
 
                     Canvas { ctx, size in
                         drawOrbits(ctx: &ctx, center: center, maxR: maxR, time: t)
                     }
                 }
+                .allowsHitTesting(false)
 
                 // Nucleus at center
                 NucleusView(utilization: state.overallUtilization)
+                    .allowsHitTesting(false)
 
-                // Hover tooltip
+                // Adaptive readout: below when there's room, right side when not
+                if useBottom {
+                    VStack {
+                        Spacer()
+                        readoutBar
+                            .padding(.bottom, 20)
+                    }
+                    .allowsHitTesting(false)
+                } else {
+                    HStack {
+                        Spacer()
+                        readoutColumn
+                            .padding(.trailing, 16)
+                    }
+                    .allowsHitTesting(false)
+                }
+
+                // Hover detection layer — must be above all visuals
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let loc):
+                            checkPlanetHover(in: geo.size, mouse: loc)
+                        case .ended:
+                            hoverText = nil
+                        }
+                    }
+
+                // Hover tooltip — above everything
                 if let text = hoverText {
                     Text(text)
                         .font(Theme.captionFont)
@@ -38,33 +73,6 @@ struct OrreryView: View {
                         .position(tooltipPos)
                         .allowsHitTesting(false)
                 }
-
-                // Adaptive readout: below when there's room, right side when not
-                let maxR = Swift.min(geo.size.width, geo.size.height) * 0.38
-                let bottomSpace = geo.size.height / 2 - maxR
-                let useBottom = bottomSpace > 70
-
-                if useBottom {
-                    VStack {
-                        Spacer()
-                        readoutBar
-                            .padding(.bottom, 20)
-                    }
-                } else {
-                    HStack {
-                        Spacer()
-                        readoutColumn
-                            .padding(.trailing, 16)
-                    }
-                }
-            }
-            .onContinuousHover { phase in
-                switch phase {
-                case .active(let loc):
-                    checkPlanetHover(in: geo.size, mouse: loc)
-                case .ended:
-                    hoverText = nil
-                }
             }
         }
     }
@@ -73,11 +81,11 @@ struct OrreryView: View {
 
     private var readoutBar: some View {
         HStack(spacing: 16) {
-            readoutItem(label: "5h", pct: state.fiveHourPct)
-            readoutItem(label: "7d", pct: state.sevenDayPct)
-            readoutItem(label: "S", pct: state.sonnetPct)
+            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit)
+            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit)
+            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit)
             if state.opusPct > 0 {
-                readoutItem(label: "O", pct: state.opusPct)
+                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical)
             }
         }
         .font(Theme.readoutFont)
@@ -85,15 +93,16 @@ struct OrreryView: View {
         .padding(.vertical, 8)
         .background(
             Capsule()
-                .fill(.ultraThinMaterial)
-                .opacity(0.5)
+                .fill(Color.white.opacity(0.06))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
         )
     }
 
-    private func readoutItem(label: String, pct: Double) -> some View {
+    private func readoutItem(label: String, pct: Double, tint: Color) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .foregroundStyle(Theme.stardust.opacity(0.5))
+                .foregroundStyle(tint.opacity(0.7))
+                .shadow(color: tint.opacity(0.5), radius: 4)
             Text("\(Int(pct))%")
                 .foregroundStyle(Color.forUtilization(pct))
         }
@@ -103,11 +112,11 @@ struct OrreryView: View {
 
     private var readoutColumn: some View {
         VStack(spacing: 12) {
-            readoutColumnItem(label: "5h", pct: state.fiveHourPct)
-            readoutColumnItem(label: "7d", pct: state.sevenDayPct)
-            readoutColumnItem(label: "S", pct: state.sonnetPct)
+            readoutColumnItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit)
+            readoutColumnItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit)
+            readoutColumnItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit)
             if state.opusPct > 0 {
-                readoutColumnItem(label: "O", pct: state.opusPct)
+                readoutColumnItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical)
             }
         }
         .font(Theme.readoutFont)
@@ -115,15 +124,16 @@ struct OrreryView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .opacity(0.5)
+                .fill(Color.white.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
         )
     }
 
-    private func readoutColumnItem(label: String, pct: Double) -> some View {
+    private func readoutColumnItem(label: String, pct: Double, tint: Color) -> some View {
         VStack(spacing: 2) {
             Text(label)
-                .foregroundStyle(Theme.stardust.opacity(0.5))
+                .foregroundStyle(tint.opacity(0.7))
+                .shadow(color: tint.opacity(0.5), radius: 4)
             Text("\(Int(pct))%")
                 .foregroundStyle(Color.forUtilization(pct))
         }
@@ -212,9 +222,9 @@ struct OrreryView: View {
         let t = Date.timeIntervalSinceReferenceDate
 
         let planets: [(pct: Double, radius: Double, drift: Double, hitR: Double, label: String, reset: String)] = [
-            (state.fiveHourPct, maxR * 0.45, 0.05, 20, "Session", state.fiveHourResetString),
-            (state.sevenDayPct, maxR * 0.70, 0.03, 24, "Weekly", state.sevenDayResetString),
-            (state.outerOrbitPct, maxR * 1.00, 0.02, 28, state.outerOrbitLabel, ""),
+            (state.fiveHourPct, maxR * 0.45, 0.05, 32, "Session", state.fiveHourResetString),
+            (state.sevenDayPct, maxR * 0.70, 0.03, 32, "Weekly", state.sevenDayResetString),
+            (state.outerOrbitPct, maxR * 1.00, 0.02, 34, state.outerOrbitLabel, ""),
         ]
 
         for planet in planets {
