@@ -56,6 +56,8 @@ The planets are drawn in `OrreryView.swift` inside `drawOrbits()` using Canvas `
 - **CIFilter noise textures** — Runtime Perlin noise on planet surfaces (alternative to Nano Banana)
 
 ## Current State (2026-02-27)
+
+### Orrery Tab
 - 3D gradient planets with specular highlights
 - Atmosphere rim lights on sunlit edge
 - Conic gradient orbital rings (directional light)
@@ -67,3 +69,20 @@ The planets are drawn in `OrreryView.swift` inside `drawOrbits()` using Canvas `
 - Usage-reactive orbital speed + glow (exponential curve)
 - Clickable capsule/table toggle with spring animation
 - Glowing white labels, tier-colored percentages, reset timers
+
+### Pulse Tab
+- Aurora cosmic waveform rendering
+- Compact glass chip stats
+- Variable-thickness edges, shimmer columns, idle aurora
+
+### Breakdown Tab (Eldritch Garden) — NEW
+- Full garden rewrite: plants grow from foggy ground line
+- Per-plant: tapered stalks with branches, tendrils, blooms, eye orbs, labels
+- Ground fog (3 drifting gradient bands), mycelium network with pulse animation
+- 40 spore particles (color-matched, hover-repelled)
+- Hover interaction: bloom brightening, tendril reaching, spore scatter
+- Glassmorphic admin overlay (.ultraThinMaterial)
+- **Flower design selection in progress** — 3 prototypes in FlowerTestView:
+  - A: Anemone (tentacle-petals) — `flower-anemone` branch
+  - B: Void Lotus (layered petals + veins) — `flower-lotus` branch
+  - C: Nebula Bloom (fibonacci cloud-ellipses) — available in FlowerRenderer
