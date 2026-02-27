@@ -246,7 +246,8 @@ struct MenuBarPopoverContent: View {
             HStack(spacing: 6) {
                 Text(label)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .shadow(color: .white.opacity(0.4), radius: 4)
                 Spacer()
                 if let reset, !reset.isEmpty {
                     Text("resets in \(reset)")
