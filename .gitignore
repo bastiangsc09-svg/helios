@@ -1,0 +1,19 @@
+# Xcode build artifacts
+build/
+DerivedData/
+
+# macOS
+.DS_Store
+._*
+
+# Xcode user-specific files
+*.xcuserstate
+xcuserdata/
+
+# Xcode workspace (keep shared data)
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+
+# Swift Package Manager
+.swiftpm/

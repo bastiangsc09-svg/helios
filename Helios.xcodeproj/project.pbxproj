@@ -1,0 +1,297 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B200000000000000000101 /* HeliosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000001; };
+		B200000000000000000102 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000002; };
+		B200000000000000000103 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000003; };
+		B200000000000000000104 /* UsageState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000004; };
+		B200000000000000000105 /* UsageEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000005; };
+		B200000000000000000106 /* BrowserImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000006; };
+		B200000000000000000107 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000007; };
+		B200000000000000000108 /* Color+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000008; };
+		B200000000000000000109 /* GlowModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000009; };
+		B200000000000000000110 /* StarfieldCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000010; };
+		B200000000000000000111 /* NavDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000011; };
+		B200000000000000000112 /* NucleusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000012; };
+		B200000000000000000113 /* OrreryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000013; };
+		B200000000000000000114 /* PulseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000014; };
+		B200000000000000000115 /* PulseStatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000015; };
+		B200000000000000000116 /* BreakdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000016; };
+		B200000000000000000117 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000017; };
+		B200000000000000000118 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000018; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B200000000000000000001 /* HeliosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeliosApp.swift; sourceTree = "<group>"; };
+		B200000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B200000000000000000003 /* UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageModels.swift; sourceTree = "<group>"; };
+		B200000000000000000004 /* UsageState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageState.swift; sourceTree = "<group>"; };
+		B200000000000000000005 /* UsageEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageEngine.swift; sourceTree = "<group>"; };
+		B200000000000000000006 /* BrowserImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserImport.swift; sourceTree = "<group>"; };
+		B200000000000000000007 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B200000000000000000008 /* Color+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Ext.swift"; sourceTree = "<group>"; };
+		B200000000000000000009 /* GlowModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlowModifier.swift; sourceTree = "<group>"; };
+		B200000000000000000010 /* StarfieldCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarfieldCanvas.swift; sourceTree = "<group>"; };
+		B200000000000000000011 /* NavDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavDots.swift; sourceTree = "<group>"; };
+		B200000000000000000012 /* NucleusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NucleusView.swift; sourceTree = "<group>"; };
+		B200000000000000000013 /* OrreryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrreryView.swift; sourceTree = "<group>"; };
+		B200000000000000000014 /* PulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseView.swift; sourceTree = "<group>"; };
+		B200000000000000000015 /* PulseStatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseStatCard.swift; sourceTree = "<group>"; };
+		B200000000000000000016 /* BreakdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakdownView.swift; sourceTree = "<group>"; };
+		B200000000000000000017 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		B200000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B200000000000000000019 /* Helios.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Helios.entitlements; sourceTree = "<group>"; };
+		B200000000000000000020 /* Helios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Helios.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B200000000000000000301 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B200000000000000000200 = {
+			isa = PBXGroup;
+			children = (
+				B200000000000000000201 /* Helios */,
+				B200000000000000000202 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B200000000000000000201 /* Helios */ = {
+			isa = PBXGroup;
+			children = (
+				B200000000000000000001 /* HeliosApp.swift */,
+				B200000000000000000002 /* ContentView.swift */,
+				B200000000000000000003 /* UsageModels.swift */,
+				B200000000000000000004 /* UsageState.swift */,
+				B200000000000000000005 /* UsageEngine.swift */,
+				B200000000000000000006 /* BrowserImport.swift */,
+				B200000000000000000007 /* Theme.swift */,
+				B200000000000000000008 /* Color+Ext.swift */,
+				B200000000000000000009 /* GlowModifier.swift */,
+				B200000000000000000010 /* StarfieldCanvas.swift */,
+				B200000000000000000011 /* NavDots.swift */,
+				B200000000000000000012 /* NucleusView.swift */,
+				B200000000000000000013 /* OrreryView.swift */,
+				B200000000000000000014 /* PulseView.swift */,
+				B200000000000000000015 /* PulseStatCard.swift */,
+				B200000000000000000016 /* BreakdownView.swift */,
+				B200000000000000000017 /* MenuBarController.swift */,
+				B200000000000000000018 /* SettingsView.swift */,
+				B200000000000000000019 /* Helios.entitlements */,
+			);
+			path = Helios;
+			sourceTree = "<group>";
+		};
+		B200000000000000000202 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B200000000000000000020 /* Helios.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B200000000000000000400 /* Helios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B200000000000000000701 /* Build configuration list for PBXNativeTarget "Helios" */;
+			buildPhases = (
+				B200000000000000000300 /* Sources */,
+				B200000000000000000301 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Helios;
+			productName = Helios;
+			productReference = B200000000000000000020 /* Helios.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B200000000000000000500 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					B200000000000000000400 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = B200000000000000000700 /* Build configuration list for PBXProject "Helios" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B200000000000000000200;
+			productRefGroup = B200000000000000000202 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B200000000000000000400 /* Helios */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B200000000000000000300 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B200000000000000000101 /* HeliosApp.swift in Sources */,
+				B200000000000000000102 /* ContentView.swift in Sources */,
+				B200000000000000000103 /* UsageModels.swift in Sources */,
+				B200000000000000000104 /* UsageState.swift in Sources */,
+				B200000000000000000105 /* UsageEngine.swift in Sources */,
+				B200000000000000000106 /* BrowserImport.swift in Sources */,
+				B200000000000000000107 /* Theme.swift in Sources */,
+				B200000000000000000108 /* Color+Ext.swift in Sources */,
+				B200000000000000000109 /* GlowModifier.swift in Sources */,
+				B200000000000000000110 /* StarfieldCanvas.swift in Sources */,
+				B200000000000000000111 /* NavDots.swift in Sources */,
+				B200000000000000000112 /* NucleusView.swift in Sources */,
+				B200000000000000000113 /* OrreryView.swift in Sources */,
+				B200000000000000000114 /* PulseView.swift in Sources */,
+				B200000000000000000115 /* PulseStatCard.swift in Sources */,
+				B200000000000000000116 /* BreakdownView.swift in Sources */,
+				B200000000000000000117 /* MenuBarController.swift in Sources */,
+				B200000000000000000118 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		B200000000000000000600 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B200000000000000000601 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B200000000000000000602 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Helios/Helios.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helios.app;
+				PRODUCT_NAME = Helios;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B200000000000000000603 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Helios/Helios.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helios.app;
+				PRODUCT_NAME = Helios;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B200000000000000000700 /* Build configuration list for PBXProject "Helios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B200000000000000000600 /* Debug */,
+				B200000000000000000601 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B200000000000000000701 /* Build configuration list for PBXNativeTarget "Helios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B200000000000000000602 /* Debug */,
+				B200000000000000000603 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = B200000000000000000500 /* Project object */;
+}
