@@ -24,15 +24,25 @@ pkill -x Helios; rm -rf /Applications/Helios.app && cp -R build/Build/Products/R
 - Plant identity colors: pulseSession (cyan), pulseWeekly (lavender), pulseSonnet (gold), pulseOpus (pink), tierLow (green), sessionOrbit (cyan)
 
 ## Current State (2026-02-27)
-- BreakdownView temporarily shows `FlowerTestView` for flower design selection
-- `FlowerRenderer` enum has 3 static draw methods (Anemone, Void Lotus, Nebula Bloom) + shared eye orb
-- To revert BreakdownView: change `body` back to `originalBody` content (ZStack with gardenView/emptyState)
-- The chosen flower design replaces `drawBloom()` in BreakdownView
+- **On `flower-anemone` branch** — active development
+- BreakdownView shows 3 big anemones (no stalks/garden, just flowers on starfield + fog)
+- `FlowerRenderer` in `FlowerTestView.swift` has 3 anemone variants + shared eye:
+  - `drawDeepSea` (Session/cyan) — 14-18 thin fast tentacles, small tip dots
+  - `drawCrown` (Weekly/lavender) — 8-10 thick tentacles, large bulbous tips, collar ring
+  - `drawSpiral` (Sonnet/gold) — 12 corkscrewing tentacles, trailing wisps, slow rotation
+- All take `brightness` param for hover (1.0 normal, 1.5 hovered)
+- BreakdownView limits to `allBuckets.prefix(3)` for consistency with OrreryView/PulseView
+- Old garden code (stalks, tendrils, mycelium, spores) still in file but not called — ready to re-integrate once flowers are finalized
+- `FlowerTestView` has slider test harness showing all 3 variants at detail + garden scale
+
+## Known Bugs (all fixed)
+- ~~Labels only show for Crown (center)~~ — Fixed: 2-pass rendering (flowers first, labels second)
+- ~~Percentage text in eye orbs looks bad~~ — Fixed: moved % below the short label
 
 ## Branches
-- `main` — checkpoint with all 3 flower prototypes
-- `flower-anemone` — Anemone bloom integration (active development)
-- `flower-lotus` — Void Lotus bloom integration (alternative)
+- `main` — safe checkpoint with all 3 original flower prototypes (Anemone/Lotus/Nebula) + docs
+- `flower-anemone` — 3 anemone variants integrated, big flowers layout (active)
+- `flower-lotus` — parked for Void Lotus alternative
 
 ## Adding Files to Xcode Project
 New `.swift` files must be added to `Helios.xcodeproj/project.pbxproj`:

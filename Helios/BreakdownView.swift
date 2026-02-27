@@ -48,21 +48,14 @@ struct BreakdownView: View {
 
     private static let plantColors: [Color] = [
         Theme.pulseSession, Theme.pulseWeekly, Theme.pulseSonnet,
-        Theme.pulseOpus, Theme.tierLow, Theme.sessionOrbit
     ]
 
-    // TODO: Revert after picking flower design — original body is gardenView/emptyState
     var body: some View {
-        FlowerTestView()
-    }
-
-    @ViewBuilder
-    private var originalBody: some View {
         ZStack {
             Theme.void.ignoresSafeArea()
 
             if let usage = state.usage, !usage.allBuckets.isEmpty {
-                gardenView(buckets: usage.allBuckets)
+                gardenView(buckets: Array(usage.allBuckets.prefix(3)))
             } else {
                 emptyState
             }
@@ -101,34 +94,56 @@ struct BreakdownView: View {
 
     @ViewBuilder
     private func gardenView(buckets: [(label: String, shortLabel: String, bucket: UsageBucket)]) -> some View {
+        let items = Array(buckets.prefix(3))
+        let n = items.count
+        let colors: [Color] = [Theme.pulseSession, Theme.pulseWeekly, Theme.pulseSonnet]
+
         GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let r = min(w / Double(max(n, 1)) * 0.35, h * 0.3)
+
             ZStack {
                 StarfieldCanvas(starCount: 60, brightnessMultiplier: 0.15)
                     .allowsHitTesting(false)
 
                 TimelineView(.animation) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
-                    let plants = computePlants(buckets: buckets, size: geo.size, time: t)
-                    let hovIdx = hoveredPlantIndex(plants: plants)
 
                     Canvas { ctx, size in
                         drawGroundFog(ctx: &ctx, size: size, time: t)
-                        drawMycelium(ctx: &ctx, plants: plants, size: size, time: t, hoveredIndex: hovIdx)
-                        for plant in plants {
-                            drawStalk(ctx: &ctx, plant: plant, time: t, isHovered: hovIdx == plant.index)
+
+                        for (i, item) in items.enumerated() {
+                            let cx = w * (Double(i) + 0.5) / Double(n)
+                            let cy = h * 0.45
+                            let center = CGPoint(x: cx, y: cy)
+                            let color = colors[i % colors.count]
+                            let util = item.bucket.utilization
+
+                            switch i % 3 {
+                            case 0:
+                                FlowerRenderer.drawDeepSea(
+                                    ctx: &ctx, center: center, radius: r,
+                                    utilization: util, color: color, time: t)
+                            case 1:
+                                FlowerRenderer.drawCrown(
+                                    ctx: &ctx, center: center, radius: r,
+                                    utilization: util, color: color, time: t)
+                            default:
+                                FlowerRenderer.drawSpiral(
+                                    ctx: &ctx, center: center, radius: r,
+                                    utilization: util, color: color, time: t)
+                            }
                         }
-                        for plant in plants {
-                            drawTendrils(ctx: &ctx, plant: plant, time: t, isHovered: hovIdx == plant.index)
-                        }
-                        for plant in plants {
-                            drawBloom(ctx: &ctx, plant: plant, time: t, isHovered: hovIdx == plant.index)
-                        }
-                        for plant in plants {
-                            drawEyeOrb(ctx: &ctx, plant: plant, time: t, isHovered: hovIdx == plant.index)
-                        }
-                        drawSpores(ctx: &ctx, plants: plants, size: size, time: t, hoveredIndex: hovIdx)
-                        drawLabels(ctx: &ctx, plants: plants)
                     }
+                }
+                .allowsHitTesting(false)
+
+                // Labels as native SwiftUI text (more reliable than Canvas text)
+                ForEach(0..<n, id: \.self) { i in
+                    flowerLabel(item: items[i], index: i, count: n,
+                                width: w, height: h, radius: r,
+                                color: colors[i % colors.count])
                 }
                 .allowsHitTesting(false)
 
@@ -152,6 +167,32 @@ struct BreakdownView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func flowerLabel(
+        item: (label: String, shortLabel: String, bucket: UsageBucket),
+        index: Int, count: Int,
+        width: Double, height: Double, radius: Double,
+        color: Color
+    ) -> some View {
+        let cx = width * (Double(index) + 0.5) / Double(count)
+        let belowFlower = height * 0.45 + radius
+
+        VStack(spacing: 3) {
+            Text(item.shortLabel)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(color.opacity(0.8))
+            Text("\(Int(item.bucket.utilization))%")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.forUtilization(item.bucket.utilization).opacity(0.7))
+            if let rd = item.bucket.resetsAtDate, rd > Date() {
+                Text(rd.countdownString)
+                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .foregroundStyle(Theme.stardust.opacity(0.35))
+            }
+        }
+        .position(x: cx, y: belowFlower + 30)
     }
 
     // MARK: - Compute Plants
@@ -446,198 +487,6 @@ struct BreakdownView: View {
                 with: .color(plant.color.opacity(0.7 * bm))
             )
         }
-    }
-
-    // MARK: - Draw Bloom
-
-    private func drawBloom(
-        ctx: inout GraphicsContext,
-        plant: PlantGeometry,
-        time: Double,
-        isHovered: Bool
-    ) {
-        let center = plant.bloomCenter
-        let r = plant.bloomRadius
-        let bm = isHovered ? 1.5 : 1.0
-        let openness = plant.utilization / 100.0
-
-        // Glow halo
-        let haloR = r * 2.5
-        ctx.drawLayer { haloCtx in
-            haloCtx.blendMode = .screen
-            haloCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - haloR, y: center.y - haloR,
-                    width: haloR * 2, height: haloR * 2
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [
-                        plant.color.opacity(0.15 * bm),
-                        plant.color.opacity(0.03),
-                        .clear,
-                    ]),
-                    center: center,
-                    startRadius: r * 0.3,
-                    endRadius: haloR
-                )
-            )
-        }
-
-        // 8 teardrop petals in 2 layers
-        ctx.drawLayer { petalCtx in
-            petalCtx.blendMode = .screen
-
-            // Outer 4 petals
-            for i in 0..<4 {
-                let baseAngle = Double(i) * .pi / 2
-                let writhe = sin(time * 0.2 + Double(i)) * openness * 0.15
-                let angle = baseAngle + writhe
-                let spread = 0.3 + openness * 0.7
-                drawPetal(
-                    ctx: &petalCtx, center: center, angle: angle,
-                    length: r * (0.8 + openness * 0.5),
-                    width: r * 0.45 * spread,
-                    color: plant.color, opacity: 0.2 * bm
-                )
-            }
-
-            // Inner 4 petals (rotated 45°)
-            for i in 0..<4 {
-                let baseAngle = Double(i) * .pi / 2 + .pi / 4
-                let writhe = sin(time * 0.2 + Double(i) + 2) * openness * 0.12
-                let angle = baseAngle + writhe
-                let spread = 0.3 + openness * 0.7
-                drawPetal(
-                    ctx: &petalCtx, center: center, angle: angle,
-                    length: r * (0.6 + openness * 0.4),
-                    width: r * 0.35 * spread,
-                    color: plant.color, opacity: 0.3 * bm
-                )
-            }
-        }
-    }
-
-    private func drawPetal(
-        ctx: inout GraphicsContext,
-        center: CGPoint,
-        angle: Double,
-        length: Double,
-        width: Double,
-        color: Color,
-        opacity: Double
-    ) {
-        let tip = CGPoint(
-            x: center.x + cos(angle) * length,
-            y: center.y + sin(angle) * length
-        )
-        let perpAngle = angle + .pi / 2
-        let cpLeft = CGPoint(
-            x: center.x + cos(angle) * length * 0.6 + cos(perpAngle) * width * 0.6,
-            y: center.y + sin(angle) * length * 0.6 + sin(perpAngle) * width * 0.6
-        )
-        let cpRight = CGPoint(
-            x: center.x + cos(angle) * length * 0.6 - cos(perpAngle) * width * 0.6,
-            y: center.y + sin(angle) * length * 0.6 - sin(perpAngle) * width * 0.6
-        )
-
-        var path = Path()
-        path.move(to: center)
-        path.addQuadCurve(to: tip, control: cpLeft)
-        path.addQuadCurve(to: center, control: cpRight)
-        path.closeSubpath()
-
-        ctx.fill(
-            path,
-            with: .radialGradient(
-                Gradient(colors: [
-                    color.opacity(opacity),
-                    color.opacity(opacity * 0.3),
-                    .clear,
-                ]),
-                center: center,
-                startRadius: 0,
-                endRadius: length
-            )
-        )
-    }
-
-    // MARK: - Draw Eye Orb
-
-    private func drawEyeOrb(
-        ctx: inout GraphicsContext,
-        plant: PlantGeometry,
-        time: Double,
-        isHovered: Bool
-    ) {
-        let center = plant.bloomCenter
-        let r = plant.bloomRadius * 0.35
-        let bm = isHovered ? 1.5 : 1.0
-        let dilation = 0.3 + (plant.utilization / 100.0) * 0.5
-        let pulseRate = 1.5 + (plant.utilization / 100.0) * 2.5
-        let pulse = (sin(time * pulseRate) + 1) / 2
-
-        // Pulsing outer glow
-        let glowR = r * (1.5 + pulse * 0.5)
-        ctx.fill(
-            Circle().path(in: CGRect(
-                x: center.x - glowR, y: center.y - glowR,
-                width: glowR * 2, height: glowR * 2
-            )),
-            with: .radialGradient(
-                Gradient(colors: [
-                    plant.color.opacity(0.2 * bm * (0.5 + pulse * 0.5)),
-                    .clear,
-                ]),
-                center: center,
-                startRadius: r * 0.5,
-                endRadius: glowR
-            )
-        )
-
-        // Iris
-        let irisR = r * dilation
-        ctx.fill(
-            Circle().path(in: CGRect(
-                x: center.x - r, y: center.y - r,
-                width: r * 2, height: r * 2
-            )),
-            with: .radialGradient(
-                Gradient(colors: [
-                    Theme.void,
-                    plant.color.opacity(0.8 * bm),
-                    plant.color.opacity(0.3 * bm),
-                    Theme.void.opacity(0.9),
-                ]),
-                center: center,
-                startRadius: irisR * 0.3,
-                endRadius: r
-            )
-        )
-
-        // Specular highlight (upper-left)
-        let specX = center.x - r * 0.25
-        let specY = center.y - r * 0.25
-        let specR = r * 0.2
-        ctx.fill(
-            Circle().path(in: CGRect(
-                x: specX - specR, y: specY - specR,
-                width: specR * 2, height: specR * 2
-            )),
-            with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.7), .clear]),
-                center: CGPoint(x: specX, y: specY),
-                startRadius: 0,
-                endRadius: specR
-            )
-        )
-
-        // Percentage text
-        let pctText = ctx.resolve(
-            Text("\(Int(plant.utilization))%")
-                .font(.system(size: max(9, plant.bloomRadius * 0.4), weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-        )
-        ctx.draw(pctText, at: center, anchor: .center)
     }
 
     // MARK: - Draw Spores

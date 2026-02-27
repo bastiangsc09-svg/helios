@@ -75,14 +75,24 @@ The planets are drawn in `OrreryView.swift` inside `drawOrbits()` using Canvas `
 - Compact glass chip stats
 - Variable-thickness edges, shimmer columns, idle aurora
 
-### Breakdown Tab (Eldritch Garden) — NEW
-- Full garden rewrite: plants grow from foggy ground line
-- Per-plant: tapered stalks with branches, tendrils, blooms, eye orbs, labels
-- Ground fog (3 drifting gradient bands), mycelium network with pulse animation
-- 40 spore particles (color-matched, hover-repelled)
-- Hover interaction: bloom brightening, tendril reaching, spore scatter
+### Breakdown Tab (Eldritch Anemones) — Active on `flower-anemone`
+- 3 big anemones on starfield + ground fog (no stalks/garden)
+- `FlowerRenderer` in `FlowerTestView.swift` has 3 anemone variants + shared eye:
+  - `drawDeepSea` (Session/cyan) — 14-18 thin fast tentacles, small tip dots
+  - `drawCrown` (Weekly/lavender) — 8-10 thick tentacles, large bulbous tips, collar ring
+  - `drawSpiral` (Sonnet/gold) — 12 corkscrewing tentacles, trailing wisps, slow rotation
+- All take `brightness` param for hover (1.0 normal, 1.5 hovered)
+- Labels: short label + percentage + reset timer below each flower
+- Buckets limited to `allBuckets.prefix(3)` for consistency with OrreryView/PulseView
+- Old garden code (stalks, tendrils, mycelium, spores) still in file but not called
+- `FlowerTestView` has slider test harness showing all 3 variants
 - Glassmorphic admin overlay (.ultraThinMaterial)
-- **Flower design selection in progress** — 3 prototypes in FlowerTestView:
-  - A: Anemone (tentacle-petals) — `flower-anemone` branch
-  - B: Void Lotus (layered petals + veins) — `flower-lotus` branch
-  - C: Nebula Bloom (fibonacci cloud-ellipses) — available in FlowerRenderer
+
+### Known Bugs (fixed)
+- ~~Labels only showed for Crown (center)~~ — Fixed: split into 2-pass rendering (flowers first, labels second)
+- ~~Percentage text in eye orbs looked bad~~ — Fixed: moved % below the short label instead of inside the flower
+
+### Branches
+- `main` — safe checkpoint with all 3 original flower prototypes (Anemone/Lotus/Nebula) + docs
+- `flower-anemone` — 3 anemone variants integrated, big flowers layout (active)
+- `flower-lotus` — parked for Void Lotus alternative

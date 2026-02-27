@@ -1,17 +1,11 @@
 import SwiftUI
 
 // MARK: - Flower Test Harness
-// Temporary view for comparing 3 eldritch flower designs side-by-side.
-// Shows large (detail) and garden-scale (actual size) versions.
-// Pick a winner, then FlowerRenderer integrates directly into BreakdownView.
+// Shows 3 anemone variants side-by-side: Deep Sea, Crown, Spiral.
+// Each maps to a bucket: Session → Deep Sea, Weekly → Crown, Sonnet → Spiral.
 
 struct FlowerTestView: View {
     @State private var utilization: Double = 70
-
-    private let colors: [Color] = [
-        Theme.pulseSession, Theme.pulseWeekly, Theme.pulseSonnet,
-        Theme.pulseOpus, Theme.tierLow, Theme.sessionOrbit,
-    ]
 
     var body: some View {
         ZStack {
@@ -19,11 +13,10 @@ struct FlowerTestView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    Text("Eldritch Flower Designs")
+                    Text("Anemone Variants")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.stardust.opacity(0.8))
 
-                    // Utilization slider
                     HStack(spacing: 16) {
                         Text("Utilization")
                             .font(.system(size: 11, design: .monospaced))
@@ -39,63 +32,49 @@ struct FlowerTestView: View {
 
                     TimelineView(.animation) { timeline in
                         let t = timeline.date.timeIntervalSinceReferenceDate
-                        let c = Theme.pulseSession
 
-                        // MARK: Large detail view
                         Text("Detail View")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Theme.stardust.opacity(0.35))
 
                         HStack(spacing: 24) {
-                            flowerPanel("A — Anemone", size: 220) { ctx, center, r in
-                                FlowerRenderer.drawAnemone(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
+                            flowerPanel("Deep Sea — Session", size: 220) { ctx, ctr, r in
+                                FlowerRenderer.drawDeepSea(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseSession, time: t)
                             }
-                            flowerPanel("B — Void Lotus", size: 220) { ctx, center, r in
-                                FlowerRenderer.drawVoidLotus(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
+                            flowerPanel("Crown — Weekly", size: 220) { ctx, ctr, r in
+                                FlowerRenderer.drawCrown(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseWeekly, time: t)
                             }
-                            flowerPanel("C — Nebula Bloom", size: 220) { ctx, center, r in
-                                FlowerRenderer.drawNebulaBloom(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
+                            flowerPanel("Spiral — Sonnet", size: 220) { ctx, ctr, r in
+                                FlowerRenderer.drawSpiral(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseSonnet, time: t)
                             }
                         }
 
-                        // MARK: Garden scale
                         Text("Garden Scale (actual bloom size)")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Theme.stardust.opacity(0.35))
                             .padding(.top, 8)
 
                         HStack(spacing: 50) {
-                            gardenScalePanel("A", time: t) { ctx, center, r in
-                                FlowerRenderer.drawAnemone(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
+                            gardenScalePanel("Deep Sea") { ctx, ctr, r in
+                                FlowerRenderer.drawDeepSea(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseSession, time: t)
                             }
-                            gardenScalePanel("B", time: t) { ctx, center, r in
-                                FlowerRenderer.drawVoidLotus(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
+                            gardenScalePanel("Crown") { ctx, ctr, r in
+                                FlowerRenderer.drawCrown(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseWeekly, time: t)
                             }
-                            gardenScalePanel("C", time: t) { ctx, center, r in
-                                FlowerRenderer.drawNebulaBloom(ctx: &ctx, center: center, radius: r,
-                                    utilization: utilization, color: c, time: t)
-                            }
-                        }
-
-                        // MARK: Color palette row
-                        Text("Color Palette (at 75%)")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Theme.stardust.opacity(0.35))
-                            .padding(.top, 8)
-
-                        HStack(spacing: 16) {
-                            ForEach(Array(colors.enumerated()), id: \.offset) { _, clr in
-                                Canvas { ctx, size in
-                                    let ctr = CGPoint(x: size.width / 2, y: size.height / 2)
-                                    FlowerRenderer.drawAnemone(ctx: &ctx, center: ctr, radius: 22,
-                                        utilization: 75, color: clr, time: t)
-                                }
-                                .frame(width: 70, height: 70)
+                            gardenScalePanel("Spiral") { ctx, ctr, r in
+                                FlowerRenderer.drawSpiral(
+                                    ctx: &ctx, center: ctr, radius: r,
+                                    utilization: utilization, color: Theme.pulseSonnet, time: t)
                             }
                         }
                     }
@@ -104,22 +83,18 @@ struct FlowerTestView: View {
                 .padding(.bottom, 20)
             }
         }
-        .frame(minWidth: 760, minHeight: 500)
+        .frame(minWidth: 760, minHeight: 420)
     }
-
-    // MARK: - Panel Builders
 
     @ViewBuilder
     private func flowerPanel(
-        _ title: String,
-        size: Double,
+        _ title: String, size: Double,
         draw: @escaping (inout GraphicsContext, CGPoint, Double) -> Void
     ) -> some View {
         VStack(spacing: 8) {
             Canvas { ctx, sz in
                 let ctr = CGPoint(x: sz.width / 2, y: sz.height / 2)
-                let r = min(sz.width, sz.height) * 0.3
-                draw(&ctx, ctr, r)
+                draw(&ctx, ctr, min(sz.width, sz.height) * 0.3)
             }
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -134,14 +109,12 @@ struct FlowerTestView: View {
     @ViewBuilder
     private func gardenScalePanel(
         _ title: String,
-        time: Double,
         draw: @escaping (inout GraphicsContext, CGPoint, Double) -> Void
     ) -> some View {
         VStack(spacing: 6) {
             Canvas { ctx, sz in
                 let ctr = CGPoint(x: sz.width / 2, y: sz.height / 2)
-                let r = 12.0 + 20.0 * utilization / 100.0 // matches BreakdownView bloom radius
-                draw(&ctx, ctr, r)
+                draw(&ctx, ctr, 12.0 + 20.0 * utilization / 100.0)
             }
             .frame(width: 90, height: 90)
 
@@ -153,26 +126,27 @@ struct FlowerTestView: View {
 }
 
 // MARK: - Flower Renderer
-// Static draw methods — pick a winner and call from BreakdownView.
+// 3 anemone variants + shared eye. Called from BreakdownView garden.
 
 enum FlowerRenderer {
 
-    // MARK: A — Anemone
-    // Sea-anemone: many thin undulating tentacle-petals radiating from a central eye.
-    // Tentacles wave with sine displacement, tips glow with bioluminescent dots.
+    // MARK: Deep Sea — Session (cyan)
+    // Many thin undulating tentacles, fast wave, small bioluminescent tips.
 
-    static func drawAnemone(
+    static func drawDeepSea(
         ctx: inout GraphicsContext,
         center: CGPoint,
         radius: Double,
         utilization: Double,
         color: Color,
-        time: Double
+        time: Double,
+        brightness: Double = 1.0
     ) {
         let u = utilization / 100.0
+        let bm = brightness
         let tentacleCount = 14 + Int(u * 4)
 
-        // Background halo
+        // Halo
         let haloR = radius * 2.5
         ctx.drawLayer { hCtx in
             hCtx.blendMode = .screen
@@ -182,378 +156,351 @@ enum FlowerRenderer {
                     width: haloR * 2, height: haloR * 2
                 )),
                 with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.12), color.opacity(0.03), .clear]),
+                    Gradient(colors: [color.opacity(0.12 * bm), color.opacity(0.03 * bm), .clear]),
                     center: center, startRadius: radius * 0.3, endRadius: haloR
                 )
             )
         }
 
-        // Tentacles
+        // Tentacles — thin, fast undulation
         let segments = 20
         for i in 0..<tentacleCount {
             let baseAngle = Double(i) * .pi * 2 / Double(tentacleCount)
             let seed = Double(i) * 2.618
-            let tentacleLen = radius * (0.5 + u * 0.8)
+            let len = radius * (0.5 + u * 0.8)
 
-            // Draw segment-by-segment with wave displacement
             for s in 0..<segments {
                 let t0 = Double(s) / Double(segments)
                 let t1 = Double(s + 1) / Double(segments)
-
-                // Wave grows stronger toward tip
                 let wave0 = sin(time * 1.2 + seed + t0 * 6) * t0 * radius * 0.15
                 let wave1 = sin(time * 1.2 + seed + t1 * 6) * t1 * radius * 0.15
-
-                let dist0 = tentacleLen * t0
-                let dist1 = tentacleLen * t1
-                let perpAngle = baseAngle + .pi / 2
+                let perp = baseAngle + .pi / 2
 
                 let pt0 = CGPoint(
-                    x: center.x + cos(baseAngle) * dist0 + cos(perpAngle) * wave0,
-                    y: center.y + sin(baseAngle) * dist0 + sin(perpAngle) * wave0
+                    x: center.x + cos(baseAngle) * len * t0 + cos(perp) * wave0,
+                    y: center.y + sin(baseAngle) * len * t0 + sin(perp) * wave0
                 )
                 let pt1 = CGPoint(
-                    x: center.x + cos(baseAngle) * dist1 + cos(perpAngle) * wave1,
-                    y: center.y + sin(baseAngle) * dist1 + sin(perpAngle) * wave1
+                    x: center.x + cos(baseAngle) * len * t1 + cos(perp) * wave1,
+                    y: center.y + sin(baseAngle) * len * t1 + sin(perp) * wave1
                 )
-
-                let width = 3.0 - 2.5 * t1
-                let opacity = 0.3 + t1 * 0.3
 
                 var seg = Path()
                 seg.move(to: pt0)
                 seg.addLine(to: pt1)
-                ctx.stroke(seg, with: .color(color.opacity(opacity)), lineWidth: width)
+                ctx.stroke(seg, with: .color(color.opacity((0.3 + t1 * 0.3) * bm)),
+                           lineWidth: 3.0 - 2.5 * t1)
             }
 
-            // Bioluminescent tip
+            // Tip glow
             let tipWave = sin(time * 1.2 + seed + 6) * radius * 0.15
-            let perpAngle = baseAngle + .pi / 2
-            let tipPt = CGPoint(
-                x: center.x + cos(baseAngle) * tentacleLen + cos(perpAngle) * tipWave,
-                y: center.y + sin(baseAngle) * tentacleLen + sin(perpAngle) * tipWave
+            let perp = baseAngle + .pi / 2
+            let tip = CGPoint(
+                x: center.x + cos(baseAngle) * len + cos(perp) * tipWave,
+                y: center.y + sin(baseAngle) * len + sin(perp) * tipWave
             )
             let tipR = 4.0 + sin(time * 2.5 + seed) * 1.5
             let tipPulse = (sin(time * 3 + seed) + 1) / 2
 
             ctx.fill(
                 Circle().path(in: CGRect(
+                    x: tip.x - tipR * 2, y: tip.y - tipR * 2,
+                    width: tipR * 4, height: tipR * 4
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.6 * bm * (0.5 + tipPulse * 0.5)), .clear]),
+                    center: tip, startRadius: 0, endRadius: tipR * 2
+                )
+            )
+            ctx.fill(
+                Circle().path(in: CGRect(
+                    x: tip.x - tipR * 0.6, y: tip.y - tipR * 0.6,
+                    width: tipR * 1.2, height: tipR * 1.2
+                )),
+                with: .color(color.opacity(0.8 * bm))
+            )
+        }
+
+        drawEye(ctx: &ctx, center: center, radius: radius * 0.25,
+                utilization: utilization, color: color, time: time, brightness: bm)
+    }
+
+    // MARK: Crown — Weekly (lavender)
+    // Fewer thick muscular tentacles, large bulbous glowing tips, slow regal sway.
+
+    static func drawCrown(
+        ctx: inout GraphicsContext,
+        center: CGPoint,
+        radius: Double,
+        utilization: Double,
+        color: Color,
+        time: Double,
+        brightness: Double = 1.0
+    ) {
+        let u = utilization / 100.0
+        let bm = brightness
+        let tentacleCount = 8 + Int(u * 2)
+
+        // Wider, more regal halo
+        let haloR = radius * 3.0
+        ctx.drawLayer { hCtx in
+            hCtx.blendMode = .screen
+            hCtx.fill(
+                Circle().path(in: CGRect(
+                    x: center.x - haloR, y: center.y - haloR,
+                    width: haloR * 2, height: haloR * 2
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.1 * bm), color.opacity(0.04 * bm), .clear]),
+                    center: center, startRadius: radius * 0.2, endRadius: haloR
+                )
+            )
+        }
+
+        // Collar ring around center
+        let collarR = radius * 0.4
+        ctx.drawLayer { cCtx in
+            cCtx.blendMode = .screen
+            let collarRect = CGRect(
+                x: center.x - collarR, y: center.y - collarR,
+                width: collarR * 2, height: collarR * 2
+            )
+            cCtx.stroke(Circle().path(in: collarRect),
+                        with: .color(color.opacity(0.2 * bm)), lineWidth: 3)
+            cCtx.fill(
+                Circle().path(in: CGRect(
+                    x: center.x - collarR * 1.3, y: center.y - collarR * 1.3,
+                    width: collarR * 2.6, height: collarR * 2.6
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.08 * bm), .clear]),
+                    center: center, startRadius: collarR * 0.8, endRadius: collarR * 1.3
+                )
+            )
+        }
+
+        // Thick tentacles — slow powerful sway
+        let segments = 15
+        for i in 0..<tentacleCount {
+            let baseAngle = Double(i) * .pi * 2 / Double(tentacleCount)
+            let seed = Double(i) * 3.14
+            let len = radius * (0.6 + u * 0.6)
+
+            for s in 0..<segments {
+                let t0 = Double(s) / Double(segments)
+                let t1 = Double(s + 1) / Double(segments)
+                let wave0 = sin(time * 0.6 + seed + t0 * 4) * t0 * radius * 0.1
+                let wave1 = sin(time * 0.6 + seed + t1 * 4) * t1 * radius * 0.1
+                let perp = baseAngle + .pi / 2
+
+                let pt0 = CGPoint(
+                    x: center.x + cos(baseAngle) * len * t0 + cos(perp) * wave0,
+                    y: center.y + sin(baseAngle) * len * t0 + sin(perp) * wave0
+                )
+                let pt1 = CGPoint(
+                    x: center.x + cos(baseAngle) * len * t1 + cos(perp) * wave1,
+                    y: center.y + sin(baseAngle) * len * t1 + sin(perp) * wave1
+                )
+
+                var seg = Path()
+                seg.move(to: pt0)
+                seg.addLine(to: pt1)
+                ctx.stroke(seg, with: .color(color.opacity((0.25 + t1 * 0.15) * bm)),
+                           lineWidth: 6.0 - 3.5 * t1)
+            }
+
+            // Stalk glow per tentacle
+            drawTentacleGlow(ctx: &ctx, center: center, baseAngle: baseAngle,
+                             len: len, seed: seed, time: time, radius: radius,
+                             color: color, bm: bm)
+
+            // Large bulbous tip
+            let tipWave = sin(time * 0.6 + seed + 4) * radius * 0.1
+            let perp = baseAngle + .pi / 2
+            let tip = CGPoint(
+                x: center.x + cos(baseAngle) * len + cos(perp) * tipWave,
+                y: center.y + sin(baseAngle) * len + sin(perp) * tipWave
+            )
+            let tipPulse = (sin(time * 1.5 + seed) + 1) / 2
+            let bulbR = 7.0 + tipPulse * 3.0
+
+            // Outer glow
+            ctx.fill(
+                Circle().path(in: CGRect(
+                    x: tip.x - bulbR * 2.5, y: tip.y - bulbR * 2.5,
+                    width: bulbR * 5, height: bulbR * 5
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.3 * bm * (0.5 + tipPulse * 0.5)), .clear]),
+                    center: tip, startRadius: 0, endRadius: bulbR * 2.5
+                )
+            )
+            // Core bulb
+            ctx.fill(
+                Circle().path(in: CGRect(
+                    x: tip.x - bulbR, y: tip.y - bulbR,
+                    width: bulbR * 2, height: bulbR * 2
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.9 * bm), color.opacity(0.4 * bm), .clear]),
+                    center: tip, startRadius: 0, endRadius: bulbR
+                )
+            )
+        }
+
+        drawEye(ctx: &ctx, center: center, radius: radius * 0.22,
+                utilization: utilization, color: color, time: time, brightness: bm)
+    }
+
+    // Crown helper — soft glow along tentacle body
+    private static func drawTentacleGlow(
+        ctx: inout GraphicsContext, center: CGPoint, baseAngle: Double,
+        len: Double, seed: Double, time: Double, radius: Double,
+        color: Color, bm: Double
+    ) {
+        ctx.drawLayer { gCtx in
+            gCtx.blendMode = .screen
+            var glowPath = Path()
+            glowPath.move(to: center)
+            let perp = baseAngle + .pi / 2
+            let midWave = sin(time * 0.6 + seed + 2) * radius * 0.05
+            let midPt = CGPoint(
+                x: center.x + cos(baseAngle) * len * 0.5 + cos(perp) * midWave,
+                y: center.y + sin(baseAngle) * len * 0.5 + sin(perp) * midWave
+            )
+            let tipWave = sin(time * 0.6 + seed + 4) * radius * 0.1
+            let tipPt = CGPoint(
+                x: center.x + cos(baseAngle) * len + cos(perp) * tipWave,
+                y: center.y + sin(baseAngle) * len + sin(perp) * tipWave
+            )
+            glowPath.addQuadCurve(to: tipPt, control: midPt)
+            gCtx.stroke(glowPath, with: .color(color.opacity(0.06 * bm)), lineWidth: 12)
+        }
+    }
+
+    // MARK: Spiral — Sonnet (gold)
+    // Corkscrewing tentacles with trailing phosphorescent wisps, slow rotation.
+
+    static func drawSpiral(
+        ctx: inout GraphicsContext,
+        center: CGPoint,
+        radius: Double,
+        utilization: Double,
+        color: Color,
+        time: Double,
+        brightness: Double = 1.0
+    ) {
+        let u = utilization / 100.0
+        let bm = brightness
+        let tentacleCount = 12
+
+        // Halo
+        let haloR = radius * 2.5
+        ctx.drawLayer { hCtx in
+            hCtx.blendMode = .screen
+            hCtx.fill(
+                Circle().path(in: CGRect(
+                    x: center.x - haloR, y: center.y - haloR,
+                    width: haloR * 2, height: haloR * 2
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.1 * bm), color.opacity(0.03 * bm), .clear]),
+                    center: center, startRadius: radius * 0.3, endRadius: haloR
+                )
+            )
+        }
+
+        // Spiraling tentacles
+        let segments = 25
+        let globalRot = time * 0.1
+
+        for i in 0..<tentacleCount {
+            let baseAngle = Double(i) * .pi * 2 / Double(tentacleCount) + globalRot
+            let seed = Double(i) * 1.618
+            let len = radius * (0.5 + u * 0.7)
+            let spiralDir: Double = i % 2 == 0 ? 1 : -1
+            var tipPt = center
+
+            for s in 0..<segments {
+                let t0 = Double(s) / Double(segments)
+                let t1 = Double(s + 1) / Double(segments)
+
+                // Quadratic spiral offset — curls tighter at tip
+                let sp0 = t0 * t0 * 2.5 * spiralDir
+                let sp1 = t1 * t1 * 2.5 * spiralDir
+                let wave0 = sin(time * 0.8 + seed + t0 * 5) * t0 * radius * 0.12
+                let wave1 = sin(time * 0.8 + seed + t1 * 5) * t1 * radius * 0.12
+
+                let a0 = baseAngle + sp0
+                let a1 = baseAngle + sp1
+                let perp0 = a0 + .pi / 2
+                let perp1 = a1 + .pi / 2
+
+                let pt0 = CGPoint(
+                    x: center.x + cos(a0) * len * t0 + cos(perp0) * wave0,
+                    y: center.y + sin(a0) * len * t0 + sin(perp0) * wave0
+                )
+                let pt1 = CGPoint(
+                    x: center.x + cos(a1) * len * t1 + cos(perp1) * wave1,
+                    y: center.y + sin(a1) * len * t1 + sin(perp1) * wave1
+                )
+
+                var seg = Path()
+                seg.move(to: pt0)
+                seg.addLine(to: pt1)
+                ctx.stroke(seg, with: .color(color.opacity((0.25 + t1 * 0.35) * bm)),
+                           lineWidth: 3.5 - 2.5 * t1)
+
+                if s == segments - 1 { tipPt = pt1 }
+            }
+
+            // Tip glow
+            let tipPulse = (sin(time * 2 + seed) + 1) / 2
+            let tipR = 3.5 + tipPulse * 2.0
+            ctx.fill(
+                Circle().path(in: CGRect(
                     x: tipPt.x - tipR * 2, y: tipPt.y - tipR * 2,
                     width: tipR * 4, height: tipR * 4
                 )),
                 with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.6 * (0.5 + tipPulse * 0.5)), .clear]),
+                    Gradient(colors: [color.opacity(0.5 * bm * (0.5 + tipPulse * 0.5)), .clear]),
                     center: tipPt, startRadius: 0, endRadius: tipR * 2
                 )
             )
             ctx.fill(
                 Circle().path(in: CGRect(
-                    x: tipPt.x - tipR * 0.6, y: tipPt.y - tipR * 0.6,
-                    width: tipR * 1.2, height: tipR * 1.2
+                    x: tipPt.x - tipR * 0.5, y: tipPt.y - tipR * 0.5,
+                    width: tipR, height: tipR
                 )),
-                with: .color(color.opacity(0.8))
+                with: .color(color.opacity(0.7 * bm))
             )
-        }
 
-        drawEye(ctx: &ctx, center: center, radius: radius * 0.25,
-                utilization: utilization, color: color, time: time)
-    }
+            // Trailing wisps — 3 ghost dots behind the tip
+            for trail in 1...3 {
+                let tT = 1.0 - Double(trail) * 0.08
+                let tSp = tT * tT * 2.5 * spiralDir
+                let tWave = sin(time * 0.8 + seed + tT * 5) * tT * radius * 0.12
+                let tA = baseAngle + tSp
+                let tPerp = tA + .pi / 2
 
-    // MARK: B — Void Lotus
-    // 3 concentric petal layers with internal vein lines, conic gradient ring,
-    // orbiting spore dots. Structured and geometric but alien.
-
-    static func drawVoidLotus(
-        ctx: inout GraphicsContext,
-        center: CGPoint,
-        radius: Double,
-        utilization: Double,
-        color: Color,
-        time: Double
-    ) {
-        let u = utilization / 100.0
-        let openness = 0.2 + u * 0.8
-
-        // Background glow
-        let haloR = radius * 2.2
-        ctx.drawLayer { hCtx in
-            hCtx.blendMode = .screen
-            hCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - haloR, y: center.y - haloR,
-                    width: haloR * 2, height: haloR * 2
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.1), color.opacity(0.02), .clear]),
-                    center: center, startRadius: radius * 0.2, endRadius: haloR
+                let wPt = CGPoint(
+                    x: center.x + cos(tA) * len * tT + cos(tPerp) * tWave,
+                    y: center.y + sin(tA) * len * tT + sin(tPerp) * tWave
                 )
-            )
-        }
-
-        // Spinning conic gradient ring
-        let ringR = radius * (1.1 + openness * 0.3)
-        ctx.drawLayer { ringCtx in
-            ringCtx.blendMode = .screen
-            let ringRect = CGRect(
-                x: center.x - ringR, y: center.y - ringR,
-                width: ringR * 2, height: ringR * 2
-            )
-            ringCtx.stroke(
-                Circle().path(in: ringRect),
-                with: .conicGradient(
-                    Gradient(colors: [
-                        color.opacity(0.3), .clear,
-                        color.opacity(0.15), .clear,
-                        color.opacity(0.25), .clear,
-                    ]),
-                    center: center,
-                    angle: .radians(time * 0.2)
-                ),
-                lineWidth: 2
-            )
-        }
-
-        // 3 petal layers (outer → inner)
-        let layers: [(count: Int, lenMul: Double, widMul: Double, angOff: Double, op: Double)] = [
-            (8, 1.0,  0.32, 0,          0.15),
-            (6, 0.78, 0.35, .pi / 12,   0.22),
-            (4, 0.55, 0.40, .pi / 8,    0.30),
-        ]
-
-        for (li, layer) in layers.enumerated() {
-            ctx.drawLayer { pCtx in
-                pCtx.blendMode = .screen
-                drawLotusPetals(
-                    ctx: &pCtx, center: center, radius: radius,
-                    count: layer.count, lenMul: layer.lenMul, widMul: layer.widMul,
-                    angOff: layer.angOff, op: layer.op, openness: openness,
-                    layerIndex: li, color: color, time: time
+                let wR = 2.0 - Double(trail) * 0.3
+                let wOp = (0.3 - Double(trail) * 0.08) * bm
+                ctx.fill(
+                    Circle().path(in: CGRect(
+                        x: wPt.x - wR, y: wPt.y - wR,
+                        width: wR * 2, height: wR * 2
+                    )),
+                    with: .color(color.opacity(wOp))
                 )
             }
         }
 
-        // Orbiting spore dots
-        for i in 0..<6 {
-            let orbitAngle = Double(i) * .pi * 2 / 6.0 + time * 0.4
-            let orbitR = ringR + 6 + sin(time * 0.8 + Double(i) * 1.5) * 4
-            let sx = center.x + cos(orbitAngle) * orbitR
-            let sy = center.y + sin(orbitAngle) * orbitR
-            let sr = 2.0 + sin(time * 2 + Double(i)) * 0.5
-
-            ctx.fill(
-                Circle().path(in: CGRect(x: sx - sr, y: sy - sr, width: sr * 2, height: sr * 2)),
-                with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.5), .clear]),
-                    center: CGPoint(x: sx, y: sy), startRadius: 0, endRadius: sr
-                )
-            )
-        }
-
-        drawEye(ctx: &ctx, center: center, radius: radius * 0.2,
-                utilization: utilization, color: color, time: time)
-    }
-
-    // MARK: C — Nebula Bloom
-    // Fibonacci spiral of translucent cloud-ellipses. Ethereal and gaseous,
-    // with connecting filaments and sparkle dots. Dreamlike.
-
-    static func drawNebulaBloom(
-        ctx: inout GraphicsContext,
-        center: CGPoint,
-        radius: Double,
-        utilization: Double,
-        color: Color,
-        time: Double
-    ) {
-        let u = utilization / 100.0
-        let petalCount = 13 + Int(u * 8)
-        let goldenAngle = 137.508 * .pi / 180
-
-        // Background halo
-        let haloR = radius * 2.8
-        ctx.drawLayer { hCtx in
-            hCtx.blendMode = .screen
-            hCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - haloR, y: center.y - haloR,
-                    width: haloR * 2, height: haloR * 2
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.08), color.opacity(0.02), .clear]),
-                    center: center, startRadius: radius * 0.2, endRadius: haloR
-                )
-            )
-        }
-
-        // Fibonacci spiral cloud-petals
-        ctx.drawLayer { pCtx in
-            pCtx.blendMode = .screen
-
-            for i in 0..<petalCount {
-                let angle = Double(i) * goldenAngle + time * 0.05
-                let distFrac = Double(i) / Double(petalCount)
-                let dist = radius * 0.15 + distFrac * radius * 0.85
-                let px = center.x + cos(angle) * dist
-                let py = center.y + sin(angle) * dist
-
-                let breathe = sin(time * 0.6 + Double(i) * 0.8) * 0.1
-                let baseSize = radius * (0.15 + distFrac * 0.2) * (0.7 + u * 0.3)
-                let petalW = baseSize * (1 + breathe)
-                let petalH = baseSize * (0.7 + breathe * 0.5)
-
-                pCtx.drawLayer { eCtx in
-                    let rotation = angle + sin(time * 0.3 + Double(i)) * 0.3
-                    let ellipseRect = CGRect(
-                        x: -petalW, y: -petalH,
-                        width: petalW * 2, height: petalH * 2
-                    )
-
-                    eCtx.translateBy(x: px, y: py)
-                    eCtx.rotate(by: .radians(rotation))
-
-                    let opacity = (1.0 - distFrac * 0.6) * (0.15 + u * 0.1)
-                    eCtx.fill(
-                        Ellipse().path(in: ellipseRect),
-                        with: .radialGradient(
-                            Gradient(colors: [
-                                color.opacity(opacity),
-                                color.opacity(opacity * 0.3),
-                                .clear,
-                            ]),
-                            center: .zero, startRadius: 0, endRadius: petalW
-                        )
-                    )
-                }
-            }
-        }
-
-        // Connecting filaments
-        ctx.drawLayer { fCtx in
-            fCtx.blendMode = .screen
-            for i in 1..<min(petalCount, 10) {
-                let a0 = Double(i - 1) * goldenAngle + time * 0.05
-                let a1 = Double(i) * goldenAngle + time * 0.05
-                let d0 = radius * 0.15 + Double(i - 1) / Double(petalCount) * radius * 0.85
-                let d1 = radius * 0.15 + Double(i) / Double(petalCount) * radius * 0.85
-
-                let p0 = CGPoint(x: center.x + cos(a0) * d0, y: center.y + sin(a0) * d0)
-                let p1 = CGPoint(x: center.x + cos(a1) * d1, y: center.y + sin(a1) * d1)
-
-                var fil = Path()
-                fil.move(to: p0)
-                fil.addLine(to: p1)
-                fCtx.stroke(fil, with: .color(color.opacity(0.08)), lineWidth: 0.5)
-            }
-        }
-
-        // Sparkle dots
-        for i in stride(from: 0, to: petalCount, by: 3) {
-            let angle = Double(i) * goldenAngle + time * 0.05
-            let dist = radius * 0.15 + Double(i) / Double(petalCount) * radius * 0.85
-            let sx = center.x + cos(angle) * dist
-            let sy = center.y + sin(angle) * dist
-            let sparkle = (sin(time * 2 + Double(i) * 1.3) + 1) / 2
-            let sr = 1.5 + sparkle * 1.5
-
-            ctx.fill(
-                Circle().path(in: CGRect(
-                    x: sx - sr * 2, y: sy - sr * 2,
-                    width: sr * 4, height: sr * 4
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [.white.opacity(0.4 * sparkle), .clear]),
-                    center: CGPoint(x: sx, y: sy), startRadius: 0, endRadius: sr * 2
-                )
-            )
-        }
-
-        // Bright core
-        let coreR = radius * 0.2
-        ctx.drawLayer { cCtx in
-            cCtx.blendMode = .plusLighter
-            cCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - coreR, y: center.y - coreR,
-                    width: coreR * 2, height: coreR * 2
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.4), color.opacity(0.1), .clear]),
-                    center: center, startRadius: 0, endRadius: coreR
-                )
-            )
-        }
-
-        drawEye(ctx: &ctx, center: center, radius: radius * 0.18,
-                utilization: utilization, color: color, time: time)
-    }
-
-    // MARK: Helper — Lotus Petals (extracted for type-checker)
-
-    private static func drawLotusPetals(
-        ctx: inout GraphicsContext,
-        center: CGPoint,
-        radius: Double,
-        count: Int,
-        lenMul: Double,
-        widMul: Double,
-        angOff: Double,
-        op: Double,
-        openness: Double,
-        layerIndex: Int,
-        color: Color,
-        time: Double
-    ) {
-        for i in 0..<count {
-            let baseAngle = Double(i) * .pi * 2 / Double(count) + angOff
-            let breathe = sin(time * 0.3 + Double(layerIndex) * 0.8 + Double(i) * 0.4) * 0.04
-            let angle = baseAngle + breathe
-            let length = radius * lenMul * (0.4 + openness * 0.6)
-            let width = radius * widMul * openness
-
-            let tip = CGPoint(
-                x: center.x + cos(angle) * length,
-                y: center.y + sin(angle) * length
-            )
-            let perp = angle + .pi / 2
-            let cpL = CGPoint(
-                x: center.x + cos(angle) * length * 0.5 + cos(perp) * width,
-                y: center.y + sin(angle) * length * 0.5 + sin(perp) * width
-            )
-            let cpR = CGPoint(
-                x: center.x + cos(angle) * length * 0.5 - cos(perp) * width,
-                y: center.y + sin(angle) * length * 0.5 - sin(perp) * width
-            )
-
-            var petal = Path()
-            petal.move(to: center)
-            petal.addQuadCurve(to: tip, control: cpL)
-            petal.addQuadCurve(to: center, control: cpR)
-            petal.closeSubpath()
-
-            let grad = Gradient(colors: [
-                color.opacity(op * 0.5),
-                color.opacity(op),
-                color.opacity(op * 0.2),
-            ])
-            ctx.fill(petal, with: .radialGradient(grad, center: center, startRadius: 0, endRadius: length))
-
-            // Vein lines
-            for v in 0..<2 {
-                let vOff = (Double(v) - 0.5) * width * 0.4
-                let vEnd = CGPoint(
-                    x: center.x + cos(angle) * length * 0.85 + cos(perp) * vOff,
-                    y: center.y + sin(angle) * length * 0.85 + sin(perp) * vOff
-                )
-                let vCtrl = CGPoint(
-                    x: center.x + cos(angle) * length * 0.4 + cos(perp) * vOff * 1.5,
-                    y: center.y + sin(angle) * length * 0.4 + sin(perp) * vOff * 1.5
-                )
-                var vein = Path()
-                vein.move(to: center)
-                vein.addQuadCurve(to: vEnd, control: vCtrl)
-                ctx.stroke(vein, with: .color(color.opacity(op * 0.6)), lineWidth: 0.5)
-            }
-        }
+        drawEye(ctx: &ctx, center: center, radius: radius * 0.22,
+                utilization: utilization, color: color, time: time, brightness: bm)
     }
 
     // MARK: Shared — Eye Orb
@@ -564,8 +511,10 @@ enum FlowerRenderer {
         radius: Double,
         utilization: Double,
         color: Color,
-        time: Double
+        time: Double,
+        brightness: Double = 1.0
     ) {
+        let bm = brightness
         let dilation = 0.3 + (utilization / 100.0) * 0.5
         let pulseRate = 1.5 + (utilization / 100.0) * 2.5
         let pulse = (sin(time * pulseRate) + 1) / 2
@@ -578,7 +527,7 @@ enum FlowerRenderer {
                 width: glowR * 2, height: glowR * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [color.opacity(0.25 * (0.5 + pulse * 0.5)), .clear]),
+                Gradient(colors: [color.opacity(0.25 * bm * (0.5 + pulse * 0.5)), .clear]),
                 center: center, startRadius: radius * 0.3, endRadius: glowR
             )
         )
@@ -593,8 +542,8 @@ enum FlowerRenderer {
             with: .radialGradient(
                 Gradient(colors: [
                     Theme.void,
-                    color.opacity(0.8),
-                    color.opacity(0.3),
+                    color.opacity(0.8 * bm),
+                    color.opacity(0.3 * bm),
                     Theme.void.opacity(0.9),
                 ]),
                 center: center, startRadius: irisR * 0.3, endRadius: radius
@@ -611,22 +560,16 @@ enum FlowerRenderer {
                 width: specR * 2, height: specR * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.7), .clear]),
+                Gradient(colors: [.white.opacity(0.7 * bm), .clear]),
                 center: CGPoint(x: specX, y: specY), startRadius: 0, endRadius: specR
             )
         )
 
-        // Percentage text
-        let pctText = ctx.resolve(
-            Text("\(Int(utilization))%")
-                .font(.system(size: max(8, radius * 0.7), weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-        )
-        ctx.draw(pctText, at: center, anchor: .center)
+        // Percentage text removed — rendered below label in BreakdownView instead
     }
 }
 
 #Preview {
     FlowerTestView()
-        .frame(width: 800, height: 550)
+        .frame(width: 800, height: 480)
 }
