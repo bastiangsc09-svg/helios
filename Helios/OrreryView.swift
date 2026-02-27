@@ -39,11 +39,23 @@ struct OrreryView: View {
                         .allowsHitTesting(false)
                 }
 
-                // Digital readout at bottom
-                VStack {
-                    Spacer()
-                    readoutBar
-                        .padding(.bottom, 60)
+                // Adaptive readout: below when there's room, right side when not
+                let maxR = Swift.min(geo.size.width, geo.size.height) * 0.38
+                let bottomSpace = geo.size.height / 2 - maxR
+                let useBottom = bottomSpace > 70
+
+                if useBottom {
+                    VStack {
+                        Spacer()
+                        readoutBar
+                            .padding(.bottom, 20)
+                    }
+                } else {
+                    HStack {
+                        Spacer()
+                        readoutColumn
+                            .padding(.trailing, 16)
+                    }
                 }
             }
             .onContinuousHover { phase in
@@ -80,6 +92,36 @@ struct OrreryView: View {
 
     private func readoutItem(label: String, pct: Double) -> some View {
         HStack(spacing: 4) {
+            Text(label)
+                .foregroundStyle(Theme.stardust.opacity(0.5))
+            Text("\(Int(pct))%")
+                .foregroundStyle(Color.forUtilization(pct))
+        }
+    }
+
+    // MARK: - Vertical Readout (right side, when window is short)
+
+    private var readoutColumn: some View {
+        VStack(spacing: 12) {
+            readoutColumnItem(label: "5h", pct: state.fiveHourPct)
+            readoutColumnItem(label: "7d", pct: state.sevenDayPct)
+            readoutColumnItem(label: "S", pct: state.sonnetPct)
+            if state.opusPct > 0 {
+                readoutColumnItem(label: "O", pct: state.opusPct)
+            }
+        }
+        .font(Theme.readoutFont)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .opacity(0.5)
+        )
+    }
+
+    private func readoutColumnItem(label: String, pct: Double) -> some View {
+        VStack(spacing: 2) {
             Text(label)
                 .foregroundStyle(Theme.stardust.opacity(0.5))
             Text("\(Int(pct))%")
