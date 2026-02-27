@@ -94,18 +94,28 @@ struct NucleusView: View {
                     .frame(width: 100, height: 100)
                     .blendMode(.screen)
 
-                // Core body
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [coreColor, nucleusColor, nucleusColor.opacity(0.3)],
-                            center: .center,
-                            startRadius: 2,
-                            endRadius: 20
+                // Core body with solar texture
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [coreColor, nucleusColor, nucleusColor.opacity(0.3)],
+                                center: .center,
+                                startRadius: 2,
+                                endRadius: 20
+                            )
                         )
-                    )
-                    .frame(width: 40, height: 40)
-                    .scaleEffect(pulseScale)
+
+                    // Solar granulation texture overlay
+                    Image("nucleus_texture")
+                        .resizable()
+                        .clipShape(Circle())
+                        .blendMode(.overlay)
+                        .opacity(0.5)
+                        .rotationEffect(.radians(t * 0.02))
+                }
+                .frame(width: 40, height: 40)
+                .scaleEffect(pulseScale)
             }
         }
     }
