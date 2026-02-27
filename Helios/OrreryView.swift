@@ -4,6 +4,7 @@ struct OrreryView: View {
     let state: UsageState
     @State private var hoverText: String?
     @State private var tooltipPos: CGPoint = .zero
+    @State private var expanded = false
 
     var body: some View {
         GeometryReader { geo in
@@ -33,24 +34,7 @@ struct OrreryView: View {
                 NucleusView(utilization: state.overallUtilization)
                     .allowsHitTesting(false)
 
-                // Adaptive readout: below when there's room, right side when not
-                if useBottom {
-                    VStack {
-                        Spacer()
-                        readoutBar
-                            .padding(.bottom, 20)
-                    }
-                    .allowsHitTesting(false)
-                } else {
-                    HStack {
-                        Spacer()
-                        readoutColumn
-                            .padding(.trailing, 16)
-                    }
-                    .allowsHitTesting(false)
-                }
-
-                // Hover detection layer — must be above all visuals
+                // Hover detection layer
                 Color.clear
                     .contentShape(Rectangle())
                     .onContinuousHover { phase in
@@ -61,6 +45,21 @@ struct OrreryView: View {
                             hoverText = nil
                         }
                     }
+
+                // Adaptive readout — clickable, above hover layer
+                if useBottom {
+                    VStack {
+                        Spacer()
+                        readoutBar
+                            .padding(.bottom, 20)
+                    }
+                } else {
+                    HStack {
+                        Spacer()
+                        readoutColumn
+                            .padding(.trailing, 16)
+                    }
+                }
 
                 // Hover tooltip — above everything
                 if let text = hoverText {
@@ -77,72 +76,105 @@ struct OrreryView: View {
         }
     }
 
-    // MARK: - Digital Readout
+    // MARK: - Digital Readout (fat capsule with reset timers)
 
     private var readoutBar: some View {
-        HStack(spacing: 16) {
-            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit)
-            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit)
-            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit)
+        HStack(spacing: expanded ? 24 : 16) {
+            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
+            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
+            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
             if state.opusPct > 0 {
-                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical)
+                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
             }
         }
-        .font(Theme.readoutFont)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, expanded ? 24 : 16)
+        .padding(.vertical, expanded ? 12 : 8)
         .background(
-            Capsule()
+            RoundedRectangle(cornerRadius: expanded ? 20 : 28)
                 .fill(Color.white.opacity(0.06))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: expanded ? 20 : 28).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
         )
+        .contentShape(RoundedRectangle(cornerRadius: expanded ? 20 : 28))
+        .onTapGesture {
+            withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
+                expanded.toggle()
+            }
+        }
     }
 
-    private func readoutItem(label: String, pct: Double, tint: Color) -> some View {
-        HStack(spacing: 4) {
+    private func readoutItem(label: String, pct: Double, tint: Color, reset: String?) -> some View {
+        VStack(spacing: 3) {
             Text(label)
-                .foregroundStyle(tint.opacity(0.7))
-                .shadow(color: tint.opacity(0.5), radius: 4)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.white.opacity(0.8))
+                .shadow(color: Color.white.opacity(0.6), radius: 4)
             Text("\(Int(pct))%")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.forUtilization(pct))
+                .shadow(color: Color.forUtilization(pct).opacity(0.6), radius: 6)
+                .scaleEffect(expanded ? 1.0 : 0.82)
+            if let reset, !reset.isEmpty {
+                Text(reset)
+                    .font(.system(size: 15, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.5))
+                    .shadow(color: Color.white.opacity(0.4), radius: 4)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .top)))
+            }
         }
+        .frame(minWidth: expanded ? 50 : 36)
     }
 
     // MARK: - Vertical Readout (right side, when window is short)
 
     private var readoutColumn: some View {
-        VStack(spacing: 12) {
-            readoutColumnItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit)
-            readoutColumnItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit)
-            readoutColumnItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit)
+        VStack(spacing: expanded ? 14 : 10) {
+            readoutColumnItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
+            readoutColumnItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
+            readoutColumnItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
             if state.opusPct > 0 {
-                readoutColumnItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical)
+                readoutColumnItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
             }
         }
-        .font(Theme.readoutFont)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 12)
+        .padding(.horizontal, expanded ? 12 : 10)
+        .padding(.vertical, expanded ? 14 : 10)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: expanded ? 16 : 20)
                 .fill(Color.white.opacity(0.06))
-                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: expanded ? 16 : 20).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
         )
+        .contentShape(RoundedRectangle(cornerRadius: expanded ? 16 : 20))
+        .onTapGesture {
+            withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
+                expanded.toggle()
+            }
+        }
     }
 
-    private func readoutColumnItem(label: String, pct: Double, tint: Color) -> some View {
+    private func readoutColumnItem(label: String, pct: Double, tint: Color, reset: String?) -> some View {
         VStack(spacing: 2) {
             Text(label)
-                .foregroundStyle(tint.opacity(0.7))
-                .shadow(color: tint.opacity(0.5), radius: 4)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.white.opacity(0.8))
+                .shadow(color: Color.white.opacity(0.6), radius: 4)
             Text("\(Int(pct))%")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.forUtilization(pct))
+                .shadow(color: Color.forUtilization(pct).opacity(0.6), radius: 6)
+                .scaleEffect(expanded ? 1.0 : 0.85)
+            if let reset, !reset.isEmpty {
+                Text(reset)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.5))
+                    .shadow(color: Color.white.opacity(0.4), radius: 4)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .top)))
+            }
         }
     }
 
     // MARK: - Canvas Rendering
 
     private func drawOrbits(ctx: inout GraphicsContext, center: CGPoint, maxR: Double, time: Double) {
-        let orbits: [(radius: Double, pct: Double, color: Color, drift: Double, pSize: Double, label: String)] = [
+        let orbits: [(radius: Double, pct: Double, color: Color, baseDrift: Double, pSize: Double, label: String)] = [
             (maxR * 0.45, state.fiveHourPct, Theme.sessionOrbit, 0.05, 6, "Session"),
             (maxR * 0.70, state.sevenDayPct, Theme.weeklyOrbit, 0.03, 9, "Weekly"),
             (maxR * 1.00, state.outerOrbitPct, Theme.outerOrbit, 0.02, 12, state.outerOrbitLabel),
@@ -165,7 +197,9 @@ struct OrreryView: View {
 
         // Trails and planets
         for orbit in orbits {
-            let angle = (orbit.pct / 100.0) * .pi * 2 + time * orbit.drift - .pi / 2
+            let urgency = pow(orbit.pct / 100.0, 2.0)
+            let drift = orbit.baseDrift + urgency * 0.15
+            let angle = (orbit.pct / 100.0) * .pi * 2 + time * drift - .pi / 2
 
             // Trail
             let trailLen = 0.8
@@ -196,13 +230,15 @@ struct OrreryView: View {
             let py = center.y + sin(angle) * orbit.radius
             let ps = orbit.pSize
 
+            let glowOpacity = 0.3 + urgency * 0.4
+            let glowRadius = ps * (2 + urgency * 2)
             ctx.fill(
-                Circle().path(in: CGRect(x: px - ps * 2, y: py - ps * 2, width: ps * 4, height: ps * 4)),
+                Circle().path(in: CGRect(x: px - glowRadius, y: py - glowRadius, width: glowRadius * 2, height: glowRadius * 2)),
                 with: .radialGradient(
-                    Gradient(colors: [orbit.color.opacity(0.3), .clear]),
+                    Gradient(colors: [orbit.color.opacity(glowOpacity), .clear]),
                     center: CGPoint(x: px, y: py),
                     startRadius: 0,
-                    endRadius: ps * 2
+                    endRadius: glowRadius
                 )
             )
 
@@ -221,14 +257,16 @@ struct OrreryView: View {
         let maxR = Swift.min(size.width, size.height) * 0.38
         let t = Date.timeIntervalSinceReferenceDate
 
-        let planets: [(pct: Double, radius: Double, drift: Double, hitR: Double, label: String, reset: String)] = [
+        let planets: [(pct: Double, radius: Double, baseDrift: Double, hitR: Double, label: String, reset: String)] = [
             (state.fiveHourPct, maxR * 0.45, 0.05, 32, "Session", state.fiveHourResetString),
             (state.sevenDayPct, maxR * 0.70, 0.03, 32, "Weekly", state.sevenDayResetString),
             (state.outerOrbitPct, maxR * 1.00, 0.02, 34, state.outerOrbitLabel, ""),
         ]
 
         for planet in planets {
-            let angle = (planet.pct / 100.0) * .pi * 2 + t * planet.drift - .pi / 2
+            let urgency = pow(planet.pct / 100.0, 2.0)
+            let drift = planet.baseDrift + urgency * 0.15
+            let angle = (planet.pct / 100.0) * .pi * 2 + t * drift - .pi / 2
             let px = center.x + cos(angle) * planet.radius
             let py = center.y + sin(angle) * planet.radius
             let dx = mouse.x - px
