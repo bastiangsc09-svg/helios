@@ -20,7 +20,7 @@ struct PulseView: View {
             ZStack {
                 StarfieldCanvas(starCount: 150, brightnessMultiplier: 0.3)
 
-                TimelineView(.animation) { timeline in
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
 
                     Canvas { ctx, size in

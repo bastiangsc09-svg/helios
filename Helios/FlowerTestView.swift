@@ -30,7 +30,7 @@ struct FlowerTestView: View {
                             .frame(width: 40, alignment: .trailing)
                     }
 
-                    TimelineView(.animation) { timeline in
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         let t = timeline.date.timeIntervalSinceReferenceDate
 
                         Text("Detail View")

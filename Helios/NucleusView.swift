@@ -50,7 +50,7 @@ struct NucleusView: View {
     let utilization: Double // 0-100
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             // Pulse rate: 0.15Hz (low) → 0.8Hz (critical)
             let pulseHz = 0.15 + (utilization / 100.0) * 0.65
