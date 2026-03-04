@@ -54,7 +54,6 @@ final class UsageEngine {
         }
 
         saveCache()
-        writeWidgetSnapshot()
     }
 
     func testSessionConnection(sessionKey: String, orgID: String) async -> (success: Bool, message: String) {
@@ -262,23 +261,6 @@ final class UsageEngine {
         }
     }
     #endif
-
-    // MARK: - Widget Bridge
-
-    private func writeWidgetSnapshot() {
-        #if os(iOS)
-        let snapshot = WidgetUsageSnapshot(
-            fiveHourPct: state.fiveHourPct,
-            sevenDayPct: state.sevenDayPct,
-            sonnetPct: state.sonnetPct,
-            opusPct: state.opusPct,
-            fiveHourReset: state.usage?.fiveHour?.resetsAtDate,
-            sevenDayReset: state.usage?.sevenDay?.resetsAtDate,
-            fetchDate: Date()
-        )
-        WidgetDataBridge.write(snapshot)
-        #endif
-    }
 
     // MARK: - Cache Persistence
 
