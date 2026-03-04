@@ -117,6 +117,7 @@
 		B200000000000000000041 /* HeliosWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeliosWidget.swift; sourceTree = "<group>"; };
 		B200000000000000000042 /* HeliosWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeliosWidgetViews.swift; sourceTree = "<group>"; };
 		B200000000000000000043 /* HeliosWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HeliosWidget.entitlements; sourceTree = "<group>"; };
+		B200000000000000000044 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B200000000000000000045 /* HeliosWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HeliosWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -243,6 +244,7 @@
 				B200000000000000000041 /* HeliosWidget.swift */,
 				B200000000000000000042 /* HeliosWidgetViews.swift */,
 				B200000000000000000043 /* HeliosWidget.entitlements */,
+				B200000000000000000044 /* Info.plist */,
 			);
 			path = HeliosWidget;
 			sourceTree = "<group>";
@@ -554,6 +556,7 @@
 				CODE_SIGN_ENTITLEMENTS = HeliosWidget/HeliosWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HeliosWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Helios Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -578,6 +581,7 @@
 				CODE_SIGN_ENTITLEMENTS = HeliosWidget/HeliosWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HeliosWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Helios Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
