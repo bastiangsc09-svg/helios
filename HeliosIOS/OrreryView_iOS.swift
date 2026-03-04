@@ -97,27 +97,29 @@ struct OrreryView_iOS: View {
 
     // MARK: - Readout Bar
 
-    @Namespace private var readoutNamespace
-
     private var readoutBar: some View {
-        GlassEffectContainer {
-            HStack(spacing: expanded ? 24 : 16) {
-                readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
-                readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
-                readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
-                if state.opusPct > 0 {
-                    readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
-                }
+        HStack(spacing: expanded ? 24 : 16) {
+            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
+            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
+            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
+            if state.opusPct > 0 {
+                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
             }
-            .padding(.horizontal, expanded ? 24 : 16)
-            .padding(.vertical, expanded ? 14 : 10)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: expanded ? 20 : 28))
-            .glassEffectID("readout", in: readoutNamespace)
-            .contentShape(RoundedRectangle(cornerRadius: expanded ? 20 : 28))
-            .onTapGesture {
-                withAnimation(.bouncy) {
-                    expanded.toggle()
-                }
+        }
+        .padding(.horizontal, expanded ? 24 : 16)
+        .padding(.vertical, expanded ? 14 : 10)
+        .background(
+            RoundedRectangle(cornerRadius: expanded ? 20 : 28)
+                .fill(.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: expanded ? 20 : 28)
+                        .strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                )
+        )
+        .contentShape(RoundedRectangle(cornerRadius: expanded ? 20 : 28))
+        .onTapGesture {
+            withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
+                expanded.toggle()
             }
         }
     }
@@ -150,7 +152,8 @@ struct OrreryView_iOS: View {
             .foregroundStyle(Theme.stardust)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .glassEffect(.regular)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
             .offset(y: -36)
     }
 
