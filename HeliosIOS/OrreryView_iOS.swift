@@ -15,8 +15,10 @@ struct OrreryView_iOS: View {
 
     var body: some View {
         GeometryReader { geo in
-            let orreryHeight = geo.size.height * 0.4
-            let maxR = min(geo.size.width, orreryHeight) * 0.38
+            // Orrery fills most of the screen; readout overlaid at bottom
+            let readoutSpace: CGFloat = 100
+            let orreryHeight = geo.size.height - readoutSpace
+            let maxR = min(geo.size.width, orreryHeight) * 0.34
 
             ZStack {
                 // Usage-responsive starfield (reduced for battery)
@@ -26,46 +28,46 @@ struct OrreryView_iOS: View {
                 )
                 .allowsHitTesting(false)
 
-                VStack(spacing: 0) {
-                    // Orrery area — top 40%
-                    ZStack {
-                        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-                            let t = timeline.date.timeIntervalSinceReferenceDate
-                            let center = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
+                // Orrery centered in the available space
+                ZStack {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                        let t = timeline.date.timeIntervalSinceReferenceDate
+                        let center = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
 
-                            Canvas { ctx, size in
-                                drawOrbits(ctx: &ctx, center: center, maxR: maxR, time: t)
-                            }
-                            .frame(height: orreryHeight)
+                        Canvas { ctx, size in
+                            drawOrbits(ctx: &ctx, center: center, maxR: maxR, time: t)
                         }
+                        .frame(height: orreryHeight)
+                    }
+                    .allowsHitTesting(false)
+
+                    // Nucleus at center
+                    NucleusView(utilization: state.overallUtilization)
+                        .position(x: geo.size.width / 2, y: orreryHeight / 2)
                         .allowsHitTesting(false)
 
-                        // Nucleus at center
-                        NucleusView(utilization: state.overallUtilization)
-                            .position(x: geo.size.width / 2, y: orreryHeight / 2)
-                            .allowsHitTesting(false)
-
-                        // Tap detection overlay
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .frame(height: orreryHeight)
-                            .onTapGesture { location in
-                                handleTap(in: CGSize(width: geo.size.width, height: orreryHeight), at: location)
-                            }
-
-                        // Tapped planet tooltip
-                        if let planet = tappedPlanet {
-                            tooltipView(for: planet)
-                                .position(planet.position)
-                                .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                                .allowsHitTesting(false)
+                    // Tap detection overlay
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .frame(height: orreryHeight)
+                        .onTapGesture { location in
+                            handleTap(in: CGSize(width: geo.size.width, height: orreryHeight), at: location)
                         }
+
+                    // Tapped planet tooltip
+                    if let planet = tappedPlanet {
+                        tooltipView(for: planet)
+                            .position(planet.position)
+                            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                            .allowsHitTesting(false)
                     }
-                    .frame(height: orreryHeight)
+                }
+                .frame(height: orreryHeight)
+                .frame(maxHeight: .infinity, alignment: .top)
 
+                // Readout bar pinned to bottom
+                VStack {
                     Spacer()
-
-                    // Liquid Glass readout bar at bottom
                     readoutBar
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
@@ -93,22 +95,27 @@ struct OrreryView_iOS: View {
         }
     }
 
-    // MARK: - Liquid Glass Readout Bar
+    // MARK: - Readout Bar
 
     private var readoutBar: some View {
-        GlassEffectContainer {
-            HStack(spacing: expanded ? 24 : 16) {
-                readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
-                readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
-                readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
-                if state.opusPct > 0 {
-                    readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
-                }
+        HStack(spacing: expanded ? 24 : 16) {
+            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
+            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
+            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
+            if state.opusPct > 0 {
+                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
             }
-            .padding(.horizontal, expanded ? 24 : 16)
-            .padding(.vertical, expanded ? 14 : 10)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: expanded ? 20 : 28))
         }
+        .padding(.horizontal, expanded ? 24 : 16)
+        .padding(.vertical, expanded ? 14 : 10)
+        .background(
+            .ultraThinMaterial,
+            in: RoundedRectangle(cornerRadius: expanded ? 20 : 28)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: expanded ? 20 : 28)
+                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+        )
         .contentShape(RoundedRectangle(cornerRadius: expanded ? 20 : 28))
         .onTapGesture {
             withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
@@ -145,7 +152,8 @@ struct OrreryView_iOS: View {
             .foregroundStyle(Theme.stardust)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .glassEffect(.regular.tint(.white.opacity(0.1)), in: .capsule)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
             .offset(y: -36)
     }
 

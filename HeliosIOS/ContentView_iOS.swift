@@ -23,7 +23,8 @@ struct ContentView_iOS: View {
                                 .font(.system(size: 20))
                                 .foregroundStyle(.white.opacity(0.8))
                                 .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive(), in: .circle)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .overlay(Circle().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
                         }
                         .padding(.trailing, 16)
                         .padding(.top, 8)
@@ -61,10 +62,9 @@ struct ContentView_iOS: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 28)
                             .padding(.vertical, 14)
-                            .glassEffect(
-                                .regular.tint(Theme.sessionOrbit).interactive(),
-                                in: .capsule
-                            )
+                            .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
+                            .background(.ultraThinMaterial, in: Capsule())
+                            .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
                     }
 
                     Spacer()

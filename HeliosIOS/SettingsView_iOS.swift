@@ -74,14 +74,14 @@ struct SettingsView_iOS: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .glassEffect(
-                        .regular.tint(Theme.sessionOrbit).interactive(),
-                        in: .capsule
-                    )
+                    .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
             }
         }
         .padding(24)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
     }
 
     // MARK: - Manual Entry Card
@@ -126,7 +126,8 @@ struct SettingsView_iOS: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
                 }
                 .disabled(sessionKey.isEmpty || orgID.isEmpty || isTesting)
 
@@ -150,16 +151,16 @@ struct SettingsView_iOS: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .glassEffect(
-                            .regular.tint(Theme.sessionOrbit).interactive(),
-                            in: .capsule
-                        )
+                        .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
                 }
                 .disabled(sessionKey.isEmpty || orgID.isEmpty)
             }
         }
         .padding(24)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
     }
 
     // MARK: - Refresh Card
@@ -181,7 +182,8 @@ struct SettingsView_iOS: View {
             }
         }
         .padding(24)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
     }
 
     // MARK: - Actions
