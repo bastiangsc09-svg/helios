@@ -6,7 +6,6 @@ on:
     paths:
       - 'Helios/**'
       - 'HeliosIOS/**'
-      - 'HeliosWidget/**'
       - 'Helios.xcodeproj/**'
       - '.github/workflows/build-ios.yml'
   workflow_dispatch:
@@ -35,7 +34,14 @@ jobs:
         run: xcodebuild -version
 
       - name: Install iOS platform
-        run: xcodebuild -downloadPlatform iOS
+        run: |
+          # List available SDKs first
+          xcodebuild -showsdks 2>/dev/null | grep -i ios || true
+          # Try downloading, but don't fail if already present or unavailable
+          xcodebuild -downloadPlatform iOS || {
+            echo "Download failed — checking if iOS SDK is already available..."
+            xcodebuild -showsdks 2>/dev/null | grep -q "iphoneos" && echo "iOS SDK found, continuing." || exit 1
+          }
 
       - name: Build iOS archive (unsigned)
         run: |
