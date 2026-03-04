@@ -4,6 +4,7 @@ struct OrreryView_iOS: View {
     let state: UsageState
     @State private var tappedPlanet: TappedPlanet?
     @State private var expanded = false
+    @State private var showStats = false
 
     private struct TappedPlanet: Equatable {
         let label: String
@@ -93,17 +94,39 @@ struct OrreryView_iOS: View {
                 }
             }
         }
+        .sheet(isPresented: $showStats) {
+            StatsView_iOS(state: state)
+        }
     }
 
     // MARK: - Readout Bar
 
     private var readoutBar: some View {
-        HStack(spacing: expanded ? 24 : 16) {
-            readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
-            readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
-            readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
-            if state.opusPct > 0 {
-                readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
+        VStack(spacing: 0) {
+            HStack(spacing: expanded ? 24 : 16) {
+                readoutItem(label: "5h", pct: state.fiveHourPct, tint: Theme.sessionOrbit, reset: expanded ? state.fiveHourResetString : nil)
+                readoutItem(label: "7d", pct: state.sevenDayPct, tint: Theme.weeklyOrbit, reset: expanded ? state.sevenDayResetString : nil)
+                readoutItem(label: "S", pct: state.sonnetPct, tint: Theme.outerOrbit, reset: nil)
+                if state.opusPct > 0 {
+                    readoutItem(label: "O", pct: state.opusPct, tint: Theme.tierCritical, reset: nil)
+                }
+            }
+
+            // Detail button when expanded
+            if expanded {
+                Button {
+                    showStats = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: 10))
+                        Text("Details")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(.white.opacity(0.5))
+                    .padding(.top, 8)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .top)))
             }
         }
         .padding(.horizontal, expanded ? 24 : 16)
