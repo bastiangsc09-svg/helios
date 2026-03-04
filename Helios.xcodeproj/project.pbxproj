@@ -555,11 +555,13 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = HeliosWidget/HeliosWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HeliosWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Helios Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -580,11 +582,13 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = HeliosWidget/HeliosWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HeliosWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Helios Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
