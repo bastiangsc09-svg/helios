@@ -27,6 +27,7 @@
 		B200000000000000000118 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000018; };
 		B200000000000000000119 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B200000000000000000021; };
 		B200000000000000000120 /* FlowerTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000022; };
+		B200000000000000000121 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000023; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		B200000000000000000020 /* Helios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Helios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B200000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B200000000000000000022 /* FlowerTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowerTestView.swift; sourceTree = "<group>"; };
+		B200000000000000000023 /* QRGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRGeneratorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +108,7 @@
 				B200000000000000000017 /* MenuBarController.swift */,
 				B200000000000000000018 /* SettingsView.swift */,
 				B200000000000000000022 /* FlowerTestView.swift */,
+				B200000000000000000023 /* QRGeneratorView.swift */,
 				B200000000000000000019 /* Helios.entitlements */,
 				B200000000000000000021 /* Assets.xcassets */,
 			);
@@ -197,6 +200,7 @@
 				B200000000000000000117 /* MenuBarController.swift in Sources */,
 				B200000000000000000118 /* SettingsView.swift in Sources */,
 				B200000000000000000120 /* FlowerTestView.swift in Sources */,
+				B200000000000000000121 /* QRGeneratorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -21,6 +21,7 @@ struct SettingsView: View {
                 sessionSection
                 adminSection
                 refreshSection
+                shareSection
             }
             .formStyle(.grouped)
             .onAppear { loadFromState() }
@@ -163,6 +164,18 @@ struct SettingsView: View {
             .pickerStyle(.segmented)
         } header: {
             Text("Refresh")
+        }
+    }
+
+    // MARK: - Share to iOS Section
+
+    private var shareSection: some View {
+        Section {
+            DisclosureGroup("Share to iOS") {
+                QRGeneratorView(state: state)
+            }
+        } header: {
+            Text("Mobile")
         }
     }
 
