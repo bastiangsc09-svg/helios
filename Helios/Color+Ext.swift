@@ -32,6 +32,7 @@ extension Color {
     /// Linear interpolation between two colors
     static func lerp(_ a: Color, _ b: Color, t: Double) -> Color {
         let t = max(0, min(1, t))
+        #if os(macOS)
         let ca = NSColor(a).usingColorSpace(.deviceRGB) ?? NSColor.white
         let cb = NSColor(b).usingColorSpace(.deviceRGB) ?? NSColor.white
         return Color(
@@ -40,6 +41,18 @@ extension Color {
             blue: ca.blueComponent + (cb.blueComponent - ca.blueComponent) * t,
             opacity: ca.alphaComponent + (cb.alphaComponent - ca.alphaComponent) * t
         )
+        #else
+        var ra: CGFloat = 0, ga: CGFloat = 0, ba: CGFloat = 0, aa: CGFloat = 0
+        var rb: CGFloat = 0, gb: CGFloat = 0, bb: CGFloat = 0, ab: CGFloat = 0
+        UIColor(a).getRed(&ra, green: &ga, blue: &ba, alpha: &aa)
+        UIColor(b).getRed(&rb, green: &gb, blue: &bb, alpha: &ab)
+        return Color(
+            red: ra + (rb - ra) * t,
+            green: ga + (gb - ga) * t,
+            blue: ba + (bb - ba) * t,
+            opacity: aa + (ab - aa) * t
+        )
+        #endif
     }
 
     /// Returns tier-appropriate color for a utilization percentage

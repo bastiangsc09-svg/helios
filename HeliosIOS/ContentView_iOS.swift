@@ -1,0 +1,78 @@
+import SwiftUI
+
+struct ContentView_iOS: View {
+    let state: UsageState
+    let engine: UsageEngine?
+    @State private var showSettings = false
+
+    var body: some View {
+        ZStack {
+            Theme.void.ignoresSafeArea()
+
+            if state.hasSessionConfig {
+                OrreryView_iOS(state: state)
+
+                // Settings gear — top trailing
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .frame(width: 44, height: 44)
+                                .glassEffect(.regular.interactive(), in: .circle)
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.top, 8)
+                    }
+                    Spacer()
+                }
+            } else {
+                // Setup prompt
+                VStack(spacing: 24) {
+                    Spacer()
+
+                    Image(systemName: "sun.max.fill")
+                        .font(.system(size: 64))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Theme.nucleusCorona, Theme.nucleusWarm],
+                                startPoint: .top, endPoint: .bottom
+                            )
+                        )
+
+                    Text("Helios")
+                        .font(.system(size: 36, weight: .ultraLight))
+                        .foregroundStyle(Theme.stardust)
+
+                    Text("Scan a QR code from Helios\non your Mac to connect.")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Theme.stardust.opacity(0.6))
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Label("Connect", systemImage: "qrcode.viewfinder")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 14)
+                            .glassEffect(
+                                .regular.tint(Theme.sessionOrbit).interactive(),
+                                in: .capsule
+                            )
+                    }
+
+                    Spacer()
+                }
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView_iOS(state: state, engine: engine)
+        }
+    }
+}

@@ -28,6 +28,20 @@
 		B200000000000000000119 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B200000000000000000021; };
 		B200000000000000000120 /* FlowerTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000022; };
 		B200000000000000000121 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000023; };
+		B200000000000000000801 /* HeliosApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000030; };
+		B200000000000000000802 /* ContentView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000031; };
+		B200000000000000000803 /* OrreryView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000032; };
+		B200000000000000000804 /* SettingsView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000033; };
+		B200000000000000000805 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000034; };
+		B200000000000000000806 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000003; };
+		B200000000000000000807 /* UsageState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000004; };
+		B200000000000000000808 /* UsageEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000005; };
+		B200000000000000000809 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000007; };
+		B200000000000000000810 /* Color+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000008; };
+		B200000000000000000811 /* GlowModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000009; };
+		B200000000000000000812 /* StarfieldCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000010; };
+		B200000000000000000813 /* NucleusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000012; };
+		B200000000000000000814 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B200000000000000000021; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,10 +68,24 @@
 		B200000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B200000000000000000022 /* FlowerTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowerTestView.swift; sourceTree = "<group>"; };
 		B200000000000000000023 /* QRGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRGeneratorView.swift; sourceTree = "<group>"; };
+		B200000000000000000030 /* HeliosApp_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HeliosApp_iOS.swift"; sourceTree = "<group>"; };
+		B200000000000000000031 /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView_iOS.swift"; sourceTree = "<group>"; };
+		B200000000000000000032 /* OrreryView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OrreryView_iOS.swift"; sourceTree = "<group>"; };
+		B200000000000000000033 /* SettingsView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView_iOS.swift"; sourceTree = "<group>"; };
+		B200000000000000000034 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
+		B200000000000000000035 /* HeliosIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HeliosIOS.entitlements; sourceTree = "<group>"; };
+		B200000000000000000036 /* HeliosIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeliosIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		B200000000000000000301 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B200000000000000000851 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -75,6 +103,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B200000000000000000852 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B200000000000000000814 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -82,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				B200000000000000000201 /* Helios */,
+				B200000000000000000203 /* HeliosIOS */,
 				B200000000000000000202 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -119,8 +156,22 @@
 			isa = PBXGroup;
 			children = (
 				B200000000000000000020 /* Helios.app */,
+				B200000000000000000036 /* HeliosIOS.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B200000000000000000203 /* HeliosIOS */ = {
+			isa = PBXGroup;
+			children = (
+				B200000000000000000030 /* HeliosApp_iOS.swift */,
+				B200000000000000000031 /* ContentView_iOS.swift */,
+				B200000000000000000032 /* OrreryView_iOS.swift */,
+				B200000000000000000033 /* SettingsView_iOS.swift */,
+				B200000000000000000034 /* QRScannerView.swift */,
+				B200000000000000000035 /* HeliosIOS.entitlements */,
+			);
+			path = HeliosIOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,6 +194,23 @@
 			productReference = B200000000000000000020 /* Helios.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B200000000000000000401 /* HeliosIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B200000000000000000702 /* Build configuration list for PBXNativeTarget "HeliosIOS" */;
+			buildPhases = (
+				B200000000000000000850 /* Sources */,
+				B200000000000000000851 /* Frameworks */,
+				B200000000000000000852 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HeliosIOS;
+			productName = HeliosIOS;
+			productReference = B200000000000000000036 /* HeliosIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -155,6 +223,9 @@
 				TargetAttributes = {
 					B200000000000000000400 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					B200000000000000000401 = {
+						CreatedOnToolsVersion = 26.0;
 					};
 				};
 			};
@@ -172,6 +243,7 @@
 			projectRoot = "";
 			targets = (
 				B200000000000000000400 /* Helios */,
+				B200000000000000000401 /* HeliosIOS */,
 			);
 		};
 /* End PBXProject section */
@@ -201,6 +273,26 @@
 				B200000000000000000118 /* SettingsView.swift in Sources */,
 				B200000000000000000120 /* FlowerTestView.swift in Sources */,
 				B200000000000000000121 /* QRGeneratorView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B200000000000000000850 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B200000000000000000801 /* HeliosApp_iOS.swift in Sources */,
+				B200000000000000000802 /* ContentView_iOS.swift in Sources */,
+				B200000000000000000803 /* OrreryView_iOS.swift in Sources */,
+				B200000000000000000804 /* SettingsView_iOS.swift in Sources */,
+				B200000000000000000805 /* QRScannerView.swift in Sources */,
+				B200000000000000000806 /* UsageModels.swift in Sources */,
+				B200000000000000000807 /* UsageState.swift in Sources */,
+				B200000000000000000808 /* UsageEngine.swift in Sources */,
+				B200000000000000000809 /* Theme.swift in Sources */,
+				B200000000000000000810 /* Color+Ext.swift in Sources */,
+				B200000000000000000811 /* GlowModifier.swift in Sources */,
+				B200000000000000000812 /* StarfieldCanvas.swift in Sources */,
+				B200000000000000000813 /* NucleusView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,6 +384,47 @@
 			};
 			name = Release;
 		};
+		B200000000000000000604 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HeliosIOS/HeliosIOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Helios;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Helios needs camera access to scan QR codes from your Mac";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helios.ios;
+				PRODUCT_NAME = HeliosIOS;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B200000000000000000605 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HeliosIOS/HeliosIOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Helios;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Helios needs camera access to scan QR codes from your Mac";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.helios.ios;
+				PRODUCT_NAME = HeliosIOS;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -309,6 +442,15 @@
 			buildConfigurations = (
 				B200000000000000000602 /* Debug */,
 				B200000000000000000603 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B200000000000000000702 /* Build configuration list for PBXNativeTarget "HeliosIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B200000000000000000604 /* Debug */,
+				B200000000000000000605 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

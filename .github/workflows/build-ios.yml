@@ -1,0 +1,53 @@
+name: Build Helios iOS
+
+on:
+  push:
+    branches: [ios, main]
+    paths:
+      - 'Helios/**'
+      - 'HeliosIOS/**'
+      - 'Helios.xcodeproj/**'
+      - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build iOS archive (unsigned)
+        run: |
+          xcodebuild archive \
+            -scheme HeliosIOS \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/HeliosIOS.xcarchive \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM="" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation
+
+      - name: Package IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/HeliosIOS.xcarchive/Products/Applications/HeliosIOS.app build/Payload/
+          cd build && zip -r HeliosIOS.ipa Payload/
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HeliosIOS
+          path: build/HeliosIOS.ipa
+          retention-days: 30

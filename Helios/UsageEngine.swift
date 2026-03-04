@@ -16,7 +16,9 @@ final class UsageEngine {
         self.cacheURL = appSupport.appendingPathComponent("cache.json")
 
         loadConfig()
+        #if os(macOS)
         migrateOldTokenEaterConfig()
+        #endif
         loadCache()
         startTimer()
         Task { await refresh() }
@@ -233,6 +235,7 @@ final class UsageEngine {
 
     // MARK: - Migrate from old token-eater
 
+    #if os(macOS)
     private func migrateOldTokenEaterConfig() {
         guard !state.hasSessionConfig else { return } // Already configured, skip
 
@@ -257,6 +260,7 @@ final class UsageEngine {
             state.lastFetch = oldCache.fetchDate
         }
     }
+    #endif
 
     // MARK: - Cache Persistence
 
@@ -283,6 +287,7 @@ final class UsageEngine {
 
 // MARK: - Old token-eater config format (for migration)
 
+#if os(macOS)
 private struct OldSharedConfig: Codable {
     var sessionKey: String
     var organizationID: String
@@ -292,3 +297,4 @@ private struct OldCachedUsage: Codable {
     let usage: UsageResponse
     let fetchDate: Date
 }
+#endif
