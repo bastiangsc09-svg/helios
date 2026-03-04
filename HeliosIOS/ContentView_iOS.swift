@@ -10,7 +10,7 @@ struct ContentView_iOS: View {
             Theme.void.ignoresSafeArea()
 
             if state.hasSessionConfig {
-                OrreryView_iOS(state: state)
+                AnemoneView_iOS(state: state)
 
                 // Settings gear — top trailing
                 VStack {

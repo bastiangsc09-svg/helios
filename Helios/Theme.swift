@@ -16,6 +16,14 @@ enum Theme {
     static let weeklyOrbit = Color(hex: "B388FF")    // lavender — 7d all-models
     static let outerOrbit = Color(hex: "FFD54F")     // gold — Sonnet/Opus outer
 
+    // Tentacle gradients (base → mid → tip)
+    static let tentacleCyanMid = Color(hex: "0080A0")
+    static let tentacleCyanBase = Color(hex: "003040")
+    static let tentacleLavenderMid = Color(hex: "7B5EBF")
+    static let tentacleLavenderBase = Color(hex: "2D1854")
+    static let tentacleGoldMid = Color(hex: "CC9A20")
+    static let tentacleGoldBase = Color(hex: "4D3800")
+
     // Nucleus gradient
     static let nucleusCool = Color(hex: "6366F1")    // indigo (low usage)
     static let nucleusWarm = Color(hex: "FF8F00")    // amber (moderate)

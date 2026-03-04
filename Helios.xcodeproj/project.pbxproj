@@ -30,7 +30,7 @@
 		B200000000000000000121 /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000023; };
 		B200000000000000000801 /* HeliosApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000030; };
 		B200000000000000000802 /* ContentView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000031; };
-		B200000000000000000803 /* OrreryView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000032; };
+		B200000000000000000803 /* AnemoneView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000032; };
 		B200000000000000000804 /* SettingsView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000033; };
 		B200000000000000000805 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000034; };
 		B200000000000000000806 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B200000000000000000003; };
@@ -71,7 +71,7 @@
 		B200000000000000000023 /* QRGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRGeneratorView.swift; sourceTree = "<group>"; };
 		B200000000000000000030 /* HeliosApp_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HeliosApp_iOS.swift"; sourceTree = "<group>"; };
 		B200000000000000000031 /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView_iOS.swift"; sourceTree = "<group>"; };
-		B200000000000000000032 /* OrreryView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OrreryView_iOS.swift"; sourceTree = "<group>"; };
+		B200000000000000000032 /* AnemoneView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnemoneView_iOS.swift"; sourceTree = "<group>"; };
 		B200000000000000000033 /* SettingsView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView_iOS.swift"; sourceTree = "<group>"; };
 		B200000000000000000034 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		B200000000000000000035 /* HeliosIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HeliosIOS.entitlements; sourceTree = "<group>"; };
@@ -168,7 +168,7 @@
 			children = (
 				B200000000000000000030 /* HeliosApp_iOS.swift */,
 				B200000000000000000031 /* ContentView_iOS.swift */,
-				B200000000000000000032 /* OrreryView_iOS.swift */,
+				B200000000000000000032 /* AnemoneView_iOS.swift */,
 				B200000000000000000033 /* SettingsView_iOS.swift */,
 				B200000000000000000034 /* QRScannerView.swift */,
 				B200000000000000000037 /* StatsView_iOS.swift */,
@@ -285,7 +285,7 @@
 			files = (
 				B200000000000000000801 /* HeliosApp_iOS.swift in Sources */,
 				B200000000000000000802 /* ContentView_iOS.swift in Sources */,
-				B200000000000000000803 /* OrreryView_iOS.swift in Sources */,
+				B200000000000000000803 /* AnemoneView_iOS.swift in Sources */,
 				B200000000000000000804 /* SettingsView_iOS.swift in Sources */,
 				B200000000000000000805 /* QRScannerView.swift in Sources */,
 				B200000000000000000815 /* StatsView_iOS.swift in Sources */,
