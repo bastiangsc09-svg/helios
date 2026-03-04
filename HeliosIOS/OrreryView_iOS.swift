@@ -109,12 +109,12 @@ struct OrreryView_iOS: View {
         .padding(.horizontal, expanded ? 24 : 16)
         .padding(.vertical, expanded ? 14 : 10)
         .background(
-            .ultraThinMaterial,
-            in: RoundedRectangle(cornerRadius: expanded ? 20 : 28)
-        )
-        .overlay(
             RoundedRectangle(cornerRadius: expanded ? 20 : 28)
-                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+                .fill(.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: expanded ? 20 : 28)
+                        .strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                )
         )
         .contentShape(RoundedRectangle(cornerRadius: expanded ? 20 : 28))
         .onTapGesture {

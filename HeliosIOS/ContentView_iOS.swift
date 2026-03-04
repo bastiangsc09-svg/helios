@@ -21,10 +21,13 @@ struct ContentView_iOS: View {
                         } label: {
                             Image(systemName: "gearshape.fill")
                                 .font(.system(size: 20))
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(.white.opacity(0.9))
                                 .frame(width: 44, height: 44)
-                                .background(.ultraThinMaterial, in: Circle())
-                                .overlay(Circle().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
+                                .background(
+                                    Circle()
+                                        .fill(.white.opacity(0.1))
+                                        .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
+                                )
                         }
                         .padding(.trailing, 16)
                         .padding(.top, 8)
