@@ -74,14 +74,11 @@ struct SettingsView_iOS: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
             }
+            .glassEffect(.regular.tint(Theme.sessionOrbit).interactive())
         }
         .padding(24)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
     }
 
     // MARK: - Manual Entry Card
@@ -126,9 +123,8 @@ struct SettingsView_iOS: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5))
                 }
+                .glassEffect(.regular.interactive())
                 .disabled(sessionKey.isEmpty || orgID.isEmpty || isTesting)
 
                 if let result = testResult {
@@ -151,16 +147,13 @@ struct SettingsView_iOS: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
                 }
+                .glassEffect(.regular.tint(Theme.sessionOrbit).interactive())
                 .disabled(sessionKey.isEmpty || orgID.isEmpty)
             }
         }
         .padding(24)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
     }
 
     // MARK: - Refresh Card
@@ -182,8 +175,7 @@ struct SettingsView_iOS: View {
             }
         }
         .padding(24)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
     }
 
     // MARK: - Actions
