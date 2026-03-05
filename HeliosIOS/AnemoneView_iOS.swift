@@ -195,8 +195,8 @@ struct AnemoneView_iOS: View {
         // Pass 4: Membrane webbing
         drawWebbing(ctx: &ctx, spines: allSpines, time: time)
 
-        // Pass 5: Eye (on top)
-        drawEye(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
+        // Pass 5: Iris (on top)
+        drawIris(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
     }
 
     // MARK: - Pass 1: Ambient Halo
@@ -239,99 +239,277 @@ struct AnemoneView_iOS: View {
         }
     }
 
-    // MARK: - Pass 5: Eye
+    // MARK: - Pass 5: Iris
 
-    private func drawEye(
+    private func drawIris(
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, activity: Double, time: Double
     ) {
-        let color = irisBaseColor(activity: activity)
-        let eyeR = maxR * 0.37          // same as collar — fills entire center
-        let pupilR = eyeR * (0.25 + activity * 0.15)
-        let pulse = (sin(time * (1.0 + activity * 1.5)) + 1) / 2
+        let irisR = maxR * 0.34
+        let pupilR = irisR * (0.28 + activity * 0.12)  // dilates with usage
+        let collaretteR = irisR * 0.48                  // jagged boundary ~1/3 out
+        let limbalR = irisR * 0.96                      // dark outer ring
+        let fiberCount = 80                              // radial muscle fibers
+        let pulse = (sin(time * (0.8 + activity * 0.6)) + 1) / 2
 
-        let eyeRect = CGRect(
-            x: center.x - eyeR, y: center.y - eyeR,
-            width: eyeR * 2, height: eyeR * 2
+        // Usage-driven colors: inner zone warm, outer zone cool
+        // Map the 3 tentacle colors into iris zones
+        let innerColor = Theme.outerOrbit        // gold/amber (inner stroma)
+        let outerColor = Theme.sessionOrbit       // cyan/teal (outer stroma)
+        let accentColor = Theme.weeklyOrbit       // lavender (crypts)
+
+        let irisRect = CGRect(
+            x: center.x - irisR, y: center.y - irisR,
+            width: irisR * 2, height: irisR * 2
         )
 
-        // 1. Opaque dark eyeball fill
+        // ── Layer 1: Dark base fill (the "sclera" behind the iris) ──
         ctx.fill(
-            Circle().path(in: eyeRect),
-            with: .radialGradient(
-                Gradient(colors: [
-                    Color(hex: "050A0D"),
-                    Color(hex: "080F14"),
-                    Color(hex: "0A1318").opacity(0.95),
-                ]),
-                center: CGPoint(x: center.x - eyeR * 0.1, y: center.y - eyeR * 0.1),
-                startRadius: 0, endRadius: eyeR
-            )
+            Circle().path(in: irisRect),
+            with: .color(Color(hex: "040608"))
         )
 
-        // 2. Iris color — fills from pupil edge to outer edge, NO void at edge
-        ctx.drawLayer { irCtx in
-            irCtx.blendMode = .screen
-            irCtx.fill(
-                Circle().path(in: eyeRect),
+        // ── Layer 2: Limbal ring (dark outer border) ──
+        ctx.drawLayer { lCtx in
+            lCtx.fill(
+                Circle().path(in: irisRect),
                 with: .radialGradient(
                     Gradient(stops: [
                         .init(color: .clear, location: 0.0),
-                        .init(color: .clear, location: pupilR / eyeR * 0.9),
-                        .init(color: color.opacity(0.6), location: pupilR / eyeR * 1.2),
-                        .init(color: color.opacity(0.9), location: 0.45),
-                        .init(color: color.opacity(0.7), location: 0.65),
-                        .init(color: color.opacity(0.4), location: 0.80),
-                        .init(color: color.opacity(0.15), location: 0.95),
+                        .init(color: .clear, location: 0.85),
+                        .init(color: Color(hex: "0A1520").opacity(0.9), location: 0.92),
+                        .init(color: Color(hex: "060D14"), location: 1.0),
+                    ]),
+                    center: center, startRadius: 0, endRadius: irisR
+                )
+            )
+        }
+
+        // ── Layer 3: Base stroma color (two-zone radial: gold inner, teal outer) ──
+        ctx.drawLayer { sCtx in
+            sCtx.blendMode = .screen
+            sCtx.fill(
+                Circle().path(in: irisRect),
+                with: .radialGradient(
+                    Gradient(stops: [
+                        .init(color: .clear, location: 0.0),
+                        .init(color: .clear, location: pupilR / irisR),
+                        .init(color: innerColor.opacity(0.25), location: pupilR / irisR + 0.03),
+                        .init(color: innerColor.opacity(0.45), location: collaretteR / irisR - 0.05),
+                        .init(color: innerColor.opacity(0.35), location: collaretteR / irisR),
+                        .init(color: outerColor.opacity(0.30), location: collaretteR / irisR + 0.05),
+                        .init(color: outerColor.opacity(0.45), location: 0.75),
+                        .init(color: outerColor.opacity(0.25), location: limbalR / irisR),
                         .init(color: .clear, location: 1.0),
                     ]),
-                    center: center, startRadius: 0, endRadius: eyeR
+                    center: center, startRadius: 0, endRadius: irisR
                 )
             )
         }
 
-        // 3. Conic multi-hue overlay — usage colors rotate through iris
-        let cyanOp = state.fiveHourPct / 100.0 * 0.5
-        let goldOp = state.sonnetPct / 100.0 * 0.45
-        let lavOp = state.sevenDayPct / 100.0 * 0.4
-        ctx.drawLayer { iCtx in
-            iCtx.blendMode = .screen
-            iCtx.opacity = 0.3
-            iCtx.fill(
-                Circle().path(in: eyeRect),
-                with: .conicGradient(
-                    Gradient(colors: [
-                        Theme.sessionOrbit.opacity(cyanOp),
-                        Theme.tentacleCyanMid.opacity(cyanOp * 0.5),
-                        Theme.outerOrbit.opacity(goldOp),
-                        Theme.tentacleGoldMid.opacity(goldOp * 0.5),
-                        Theme.weeklyOrbit.opacity(lavOp),
-                        Theme.tentacleLavenderMid.opacity(lavOp * 0.5),
-                        Theme.sessionOrbit.opacity(cyanOp),
-                    ]),
-                    center: center,
-                    angle: Angle(radians: time * 0.15)
+        // ── Layer 4: Radial muscle fibers (the defining texture of an iris) ──
+        ctx.drawLayer { fCtx in
+            fCtx.blendMode = .screen
+
+            for i in 0..<fiberCount {
+                let fi = Double(i)
+                let seed = fi * 137.508  // golden angle distribution
+                let baseAngle = fi * .pi * 2.0 / Double(fiberCount)
+
+                // Gentle organic wobble per fiber
+                let wobble = sin(seed * 3.7 + time * 0.08) * 0.04
+                    + sin(seed * 7.1) * 0.02
+                let angle = baseAngle + wobble
+
+                // Fiber starts just outside pupil, ends near limbus
+                let startR = pupilR + irisR * 0.02
+                let endR = limbalR - irisR * 0.01 + sin(seed * 2.3) * irisR * 0.03
+
+                // Control point for slight curve (fibers aren't perfectly straight)
+                let midR = (startR + endR) / 2
+                let curveBias = sin(seed * 5.1 + time * 0.05) * irisR * 0.04
+                let perpAngle = angle + .pi / 2
+
+                let startPt = CGPoint(
+                    x: center.x + cos(angle) * startR,
+                    y: center.y + sin(angle) * startR
                 )
-            )
-            // Mask: show in iris band only
-            iCtx.fill(
-                Circle().path(in: eyeRect),
-                with: .radialGradient(
-                    Gradient(stops: [
-                        .init(color: .clear, location: 0.0),
-                        .init(color: .clear, location: pupilR / eyeR),
-                        .init(color: .white.opacity(0.4), location: 0.35),
-                        .init(color: .white.opacity(0.7), location: 0.55),
-                        .init(color: .white.opacity(0.4), location: 0.80),
-                        .init(color: .clear, location: 0.95),
-                    ]),
-                    center: center, startRadius: 0, endRadius: eyeR
+                let endPt = CGPoint(
+                    x: center.x + cos(angle) * endR,
+                    y: center.y + sin(angle) * endR
                 )
-            )
+                let ctrlPt = CGPoint(
+                    x: center.x + cos(angle) * midR + cos(perpAngle) * curveBias,
+                    y: center.y + sin(angle) * midR + sin(perpAngle) * curveBias
+                )
+
+                var fiber = Path()
+                fiber.move(to: startPt)
+                fiber.addQuadCurve(to: endPt, control: ctrlPt)
+
+                // Fiber color: gold near pupil, transitions to teal past collarette
+                // Each fiber has slight unique brightness variation
+                let brightVar = 0.7 + sin(seed * 1.9) * 0.3
+                let fiberPulse = (sin(time * 0.5 + seed * 0.3) + 1) / 2
+
+                // Width tapers: thicker near pupil, thinner at edge
+                let width = 1.2 + sin(seed * 4.3) * 0.4
+
+                // Inner fibers (pupil → collarette): warm gold
+                // Outer fibers drawn on top with teal
+                let opacity = (0.15 + fiberPulse * 0.08) * brightVar
+
+                // Draw inner portion (gold)
+                fCtx.stroke(fiber, with: .color(innerColor.opacity(opacity)), lineWidth: width)
+            }
         }
 
-        // 4. Atmospheric glow beyond the eye
-        let glowR = eyeR * 1.5
+        // ── Layer 5: Outer fiber overlay (teal fibers from collarette outward) ──
+        ctx.drawLayer { oCtx in
+            oCtx.blendMode = .screen
+
+            for i in 0..<fiberCount {
+                let fi = Double(i)
+                let seed = fi * 137.508
+                let baseAngle = fi * .pi * 2.0 / Double(fiberCount)
+                let wobble = sin(seed * 3.7 + time * 0.08) * 0.04 + sin(seed * 7.1) * 0.02
+                let angle = baseAngle + wobble
+
+                let startR = collaretteR - irisR * 0.02
+                let endR = limbalR - irisR * 0.02 + sin(seed * 2.3) * irisR * 0.02
+                let midR = (startR + endR) / 2
+                let curveBias = sin(seed * 5.1 + time * 0.05) * irisR * 0.05
+                let perpAngle = angle + .pi / 2
+
+                let startPt = CGPoint(
+                    x: center.x + cos(angle) * startR,
+                    y: center.y + sin(angle) * startR
+                )
+                let endPt = CGPoint(
+                    x: center.x + cos(angle) * endR,
+                    y: center.y + sin(angle) * endR
+                )
+                let ctrlPt = CGPoint(
+                    x: center.x + cos(angle) * midR + cos(perpAngle) * curveBias,
+                    y: center.y + sin(angle) * midR + sin(perpAngle) * curveBias
+                )
+
+                var fiber = Path()
+                fiber.move(to: startPt)
+                fiber.addQuadCurve(to: endPt, control: ctrlPt)
+
+                let brightVar = 0.6 + sin(seed * 2.7) * 0.4
+                let fiberPulse = (sin(time * 0.4 + seed * 0.5) + 1) / 2
+                let width = 1.0 + sin(seed * 3.1) * 0.3
+                let opacity = (0.12 + fiberPulse * 0.06) * brightVar
+
+                oCtx.stroke(fiber, with: .color(outerColor.opacity(opacity)), lineWidth: width)
+            }
+        }
+
+        // ── Layer 6: Collarette ring (the jagged boundary between inner/outer stroma) ──
+        ctx.drawLayer { cCtx in
+            cCtx.blendMode = .screen
+            let segments = 48
+            var collarPath = Path()
+            for i in 0...segments {
+                let t = Double(i) / Double(segments)
+                let angle = t * .pi * 2
+                // Jagged edge — crypts and furrows
+                let jag = sin(angle * 12 + time * 0.1) * irisR * 0.015
+                    + sin(angle * 7 + 1.5) * irisR * 0.01
+                    + sin(angle * 19 + 0.7) * irisR * 0.006
+                let r = collaretteR + jag
+                let pt = CGPoint(
+                    x: center.x + cos(angle) * r,
+                    y: center.y + sin(angle) * r
+                )
+                if i == 0 { collarPath.move(to: pt) }
+                else { collarPath.addLine(to: pt) }
+            }
+            collarPath.closeSubpath()
+            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.35)), lineWidth: 1.8)
+            // Soft glow around collarette
+            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.10)), lineWidth: 5.0)
+        }
+
+        // ── Layer 7: Crypts (darker spots scattered through stroma) ──
+        ctx.drawLayer { crCtx in
+            crCtx.blendMode = .multiply
+            let cryptCount = 20
+            for i in 0..<cryptCount {
+                let seed = Double(i) * 97.3
+                let angle = seed * 0.618 * .pi * 2
+                let rNorm = 0.35 + fmod(seed * 0.37, 0.45)
+                let r = irisR * rNorm
+                let cx = center.x + cos(angle) * r
+                let cy = center.y + sin(angle) * r
+                let cryptR = irisR * (0.015 + sin(seed * 3.1) * 0.008)
+                let cryptOp = 0.3 + sin(seed * 2.7) * 0.15
+
+                crCtx.fill(
+                    Circle().path(in: CGRect(
+                        x: cx - cryptR, y: cy - cryptR,
+                        width: cryptR * 2, height: cryptR * 2
+                    )),
+                    with: .radialGradient(
+                        Gradient(colors: [
+                            accentColor.opacity(cryptOp * 0.2),
+                            Color(hex: "0A0E14").opacity(cryptOp),
+                            .clear
+                        ]),
+                        center: CGPoint(x: cx, y: cy),
+                        startRadius: 0, endRadius: cryptR
+                    )
+                )
+            }
+        }
+
+        // ── Layer 8: Pupil (deep black with soft irregular edge) ──
+        ctx.drawLayer { pCtx in
+            // Irregular pupil border via polygon
+            let pupilSegs = 36
+            var pupilPath = Path()
+            for i in 0...pupilSegs {
+                let t = Double(i) / Double(pupilSegs)
+                let angle = t * .pi * 2
+                let irregularity = sin(angle * 8 + time * 0.15) * pupilR * 0.03
+                    + sin(angle * 13) * pupilR * 0.02
+                let r = pupilR + irregularity
+                let pt = CGPoint(
+                    x: center.x + cos(angle) * r,
+                    y: center.y + sin(angle) * r
+                )
+                if i == 0 { pupilPath.move(to: pt) }
+                else { pupilPath.addLine(to: pt) }
+            }
+            pupilPath.closeSubpath()
+
+            pCtx.fill(pupilPath, with: .color(Color(hex: "010102")))
+
+            // Soft pupil edge glow (fibers meeting the pupil)
+            pCtx.drawLayer { peCtx in
+                peCtx.blendMode = .screen
+                peCtx.fill(
+                    Circle().path(in: CGRect(
+                        x: center.x - pupilR * 1.15, y: center.y - pupilR * 1.15,
+                        width: pupilR * 2.3, height: pupilR * 2.3
+                    )),
+                    with: .radialGradient(
+                        Gradient(colors: [
+                            .clear,
+                            innerColor.opacity(0.15),
+                            innerColor.opacity(0.08),
+                            .clear
+                        ]),
+                        center: center, startRadius: pupilR * 0.85, endRadius: pupilR * 1.2
+                    )
+                )
+            }
+        }
+
+        // ── Layer 9: Ambient glow (extends beyond iris) ──
+        let glowR = irisR * 1.6
         ctx.drawLayer { gCtx in
             gCtx.blendMode = .screen
             gCtx.fill(
@@ -341,16 +519,16 @@ struct AnemoneView_iOS: View {
                 )),
                 with: .radialGradient(
                     Gradient(colors: [
-                        color.opacity(0.15 * (0.6 + pulse * 0.4)),
-                        color.opacity(0.05),
+                        outerColor.opacity(0.10 * (0.6 + pulse * 0.4)),
+                        outerColor.opacity(0.03),
                         .clear
                     ]),
-                    center: center, startRadius: eyeR * 0.6, endRadius: glowR
+                    center: center, startRadius: irisR * 0.5, endRadius: glowR
                 )
             )
         }
 
-        // 5. High-usage pulse
+        // ── Layer 10: High-usage pulse ──
         let maxPct = max(state.fiveHourPct, state.sonnetPct, state.sevenDayPct)
         if maxPct > 80 {
             let urgency = (maxPct - 80) / 20.0
@@ -358,54 +536,42 @@ struct AnemoneView_iOS: View {
             ctx.drawLayer { eCtx in
                 eCtx.blendMode = .plusLighter
                 eCtx.fill(
-                    Circle().path(in: eyeRect),
+                    Circle().path(in: irisRect),
                     with: .radialGradient(
                         Gradient(colors: [
-                            Theme.nucleusHot.opacity(0.15 * errPulse * urgency),
-                            Theme.nucleusHot.opacity(0.05 * errPulse * urgency),
+                            Theme.nucleusHot.opacity(0.12 * errPulse * urgency),
                             .clear
                         ]),
-                        center: center, startRadius: 0, endRadius: eyeR * 0.4
+                        center: center, startRadius: 0, endRadius: pupilR * 1.5
                     )
                 )
             }
         }
 
-        // 6. Rim light
-        ctx.drawLayer { rCtx in
-            rCtx.blendMode = .plusLighter
-            let rimArc = Path { p in
-                p.addArc(center: center, radius: eyeR * 0.92,
-                         startAngle: .degrees(-140), endAngle: .degrees(-40),
-                         clockwise: false)
-            }
-            rCtx.stroke(rimArc, with: .color(color.opacity(0.2 + pulse * 0.1)), lineWidth: 2.0)
-        }
-
-        // 7. Specular highlights
-        let specX = center.x - eyeR * 0.25
-        let specY = center.y - eyeR * 0.25
-        let specR = eyeR * 0.12
+        // ── Layer 11: Specular highlights ──
+        let specX = center.x - irisR * 0.22
+        let specY = center.y - irisR * 0.22
+        let specR = irisR * 0.10
         ctx.fill(
             Circle().path(in: CGRect(
                 x: specX - specR, y: specY - specR,
                 width: specR * 2, height: specR * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.65), .white.opacity(0.1), .clear]),
+                Gradient(colors: [.white.opacity(0.5), .white.opacity(0.08), .clear]),
                 center: CGPoint(x: specX, y: specY), startRadius: 0, endRadius: specR
             )
         )
-        let spec2X = center.x + eyeR * 0.18
-        let spec2Y = center.y + eyeR * 0.12
-        let spec2R = eyeR * 0.06
+        let spec2X = center.x + irisR * 0.15
+        let spec2Y = center.y + irisR * 0.10
+        let spec2R = irisR * 0.05
         ctx.fill(
             Circle().path(in: CGRect(
                 x: spec2X - spec2R, y: spec2Y - spec2R,
                 width: spec2R * 2, height: spec2R * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.3), .clear]),
+                Gradient(colors: [.white.opacity(0.25), .clear]),
                 center: CGPoint(x: spec2X, y: spec2Y), startRadius: 0, endRadius: spec2R
             )
         )
