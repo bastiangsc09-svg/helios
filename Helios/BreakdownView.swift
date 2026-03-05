@@ -107,7 +107,7 @@ struct BreakdownView: View {
                 StarfieldCanvas(starCount: 60, brightnessMultiplier: 0.15)
                     .allowsHitTesting(false)
 
-                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
 
                     Canvas { ctx, size in

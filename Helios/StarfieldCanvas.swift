@@ -32,7 +32,7 @@ struct StarfieldCanvas: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 10.0)) { timeline in
             Canvas { ctx, size in
                 let time = timeline.date.timeIntervalSinceReferenceDate
                 let bm = brightnessMultiplier

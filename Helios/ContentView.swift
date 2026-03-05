@@ -24,16 +24,15 @@ struct ContentView: View {
             } else if showSettings {
                 SettingsView(state: state, engine: engine)
             } else {
-                // All views stay alive — just toggle visibility
-                OrreryView(state: state)
-                    .opacity(selectedTab == .orrery ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .orrery)
-                PulseView(state: state)
-                    .opacity(selectedTab == .pulse ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .pulse)
-                BreakdownView(state: state)
-                    .opacity(selectedTab == .breakdown ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .breakdown)
+                // Only render the active tab — inactive tabs are fully torn down
+                switch selectedTab {
+                case .orrery:
+                    OrreryView(state: state)
+                case .pulse:
+                    PulseView(state: state)
+                case .breakdown:
+                    BreakdownView(state: state)
+                }
 
                 // NavDots overlay at bottom — visible on hover
                 VStack {

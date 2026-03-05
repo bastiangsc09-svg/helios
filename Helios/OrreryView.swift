@@ -20,7 +20,7 @@ struct OrreryView: View {
                 )
                 .allowsHitTesting(false)
 
-                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
 

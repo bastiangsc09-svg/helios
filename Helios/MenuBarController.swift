@@ -85,7 +85,7 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
     // MARK: - Render Timer
 
     private func startRenderTimer() {
-        renderTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        renderTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             self?.updateStatusItemImage()
         }
     }
@@ -298,7 +298,7 @@ struct MiniNucleusView: View {
     let utilization: Double
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 10.0)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let pulseScale = 1.0 + sin(t * 0.4 * .pi * 2) * 0.03
             let rot = t * 0.03
