@@ -230,12 +230,12 @@ struct AnemoneView_iOS: View {
 
     // MARK: - Iris Base Color
 
-    /// Lerp from indigo (calm) → amber (moderate) → red (critical) based on utilization
+    /// Lerp from white (calm) → teal (moderate) → gold (critical) based on utilization
     private func irisBaseColor(activity: Double) -> Color {
         if activity < 0.5 {
-            return Color.lerp(Theme.nucleusCool, Theme.nucleusWarm, t: activity * 2)
+            return Color.lerp(Theme.stardust, Theme.sessionOrbit, t: activity * 2)
         } else {
-            return Color.lerp(Theme.nucleusWarm, Theme.nucleusHot, t: (activity - 0.5) * 2)
+            return Color.lerp(Theme.sessionOrbit, Theme.outerOrbit, t: (activity - 0.5) * 2)
         }
     }
 
