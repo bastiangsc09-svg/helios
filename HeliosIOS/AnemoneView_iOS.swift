@@ -28,6 +28,14 @@ private struct TentacleDesc {
     let baseColor: Color
 }
 
+// MARK: - Spore (floating light orb)
+
+private struct Spore {
+    let baseX: Double
+    let seed: Double
+    let cycleSpeed: Double
+}
+
 // MARK: - Anemone View
 
 struct AnemoneView_iOS: View {
@@ -35,6 +43,14 @@ struct AnemoneView_iOS: View {
     @State private var tapped: HitCache.Target?
     @State private var expanded = false
     @State private var showStats = false
+    @State private var spores: [Spore] = (0..<25).map { i in
+        let seed = Double(i) * 137.508
+        return Spore(
+            baseX: fmod(seed * 23.1, 1.0),
+            seed: seed,
+            cycleSpeed: 0.012 + fmod(seed, 0.02)
+        )
+    }
 
     private let hitCache = HitCache()
 
@@ -45,20 +61,14 @@ struct AnemoneView_iOS: View {
             let maxR = min(geo.size.width, orreryHeight) * 0.34
 
             ZStack {
-                // 1. Starfield
-                StarfieldCanvas(
-                    starCount: 200,
-                    brightnessMultiplier: 0.4 + (state.overallUtilization / 100.0) * 0.6
-                )
-                .allowsHitTesting(false)
-
-                // 2. Tentacle canvas + nucleus
+                // 1. Anemone canvas (spores + organism)
                 ZStack {
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         let t = timeline.date.timeIntervalSinceReferenceDate
                         let center = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
 
                         Canvas { ctx, size in
+                            drawSpores(ctx: &ctx, size: size, time: t)
                             drawAnemone(
                                 ctx: &ctx, center: center, maxR: maxR,
                                 time: t
@@ -163,7 +173,10 @@ struct AnemoneView_iOS: View {
         // Pass 1: Ambient halo
         drawHalo(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
 
-        // Pass 2: Collar ring
+        // Pass 2: Body mass (fills center, connects collar to eye)
+        drawBodyMass(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
+
+        // Pass 3: Collar ring
         drawCollar(ctx: &ctx, center: center, maxR: maxR, time: time)
 
         // Accumulate spine arrays for webbing
@@ -173,7 +186,7 @@ struct AnemoneView_iOS: View {
         hitCache.tips.removeAll()
         hitCache.midpoints.removeAll()
 
-        // Pass 3 + 4: Tentacles
+        // Pass 4: Tentacles
         for desc in tentacles {
             let spine = drawTentacle(
                 ctx: &ctx, center: center, maxR: maxR,
@@ -182,10 +195,10 @@ struct AnemoneView_iOS: View {
             allSpines.append(spine)
         }
 
-        // Pass 3 (late): Membrane webbing between adjacent tentacles
+        // Pass 5: Membrane webbing
         drawWebbing(ctx: &ctx, spines: allSpines, time: time)
 
-        // Pass 5: Central eye
+        // Pass 6: Central eye (on top of everything)
         drawEye(ctx: &ctx, center: center, maxR: maxR, time: time)
     }
 
@@ -195,8 +208,8 @@ struct AnemoneView_iOS: View {
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, activity: Double, time: Double
     ) {
-        let haloR = maxR * 2.5
-        let intensity = 0.04 + activity * 0.06
+        let haloR = maxR * 3.0
+        let intensity = 0.06 + activity * 0.10
         let irisColor = irisBaseColor(activity: activity)
         ctx.drawLayer { hCtx in
             hCtx.blendMode = .screen
@@ -212,7 +225,7 @@ struct AnemoneView_iOS: View {
                         Theme.nucleusCool.opacity(intensity * 0.2),
                         .clear
                     ]),
-                    center: center, startRadius: maxR * 0.15, endRadius: haloR
+                    center: center, startRadius: maxR * 0.1, endRadius: haloR
                 )
             )
         }
@@ -229,13 +242,82 @@ struct AnemoneView_iOS: View {
         }
     }
 
-    // MARK: - Pass 5: Central Eye
+    // MARK: - Pass 2: Body Mass
+
+    private func drawBodyMass(
+        ctx: inout GraphicsContext, center: CGPoint,
+        maxR: Double, activity: Double, time: Double
+    ) {
+        let bodyR = maxR * 0.30
+        let breathe = sin(time * 1.2) * 0.04
+        let r = bodyR * (1.0 + breathe)
+        let irisColor = irisBaseColor(activity: activity)
+
+        // Outer soft body glow
+        let outerR = r * 2.2
+        ctx.drawLayer { bCtx in
+            bCtx.blendMode = .screen
+            bCtx.fill(
+                Circle().path(in: CGRect(
+                    x: center.x - outerR, y: center.y - outerR,
+                    width: outerR * 2, height: outerR * 2
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [
+                        irisColor.opacity(0.18),
+                        Theme.nucleusCool.opacity(0.08),
+                        .clear
+                    ]),
+                    center: center, startRadius: r * 0.5, endRadius: outerR
+                )
+            )
+        }
+
+        // Main body sphere — offset gradient for 3D illusion
+        let lightOffset = CGPoint(x: center.x - r * 0.15, y: center.y - r * 0.2)
+        ctx.fill(
+            Circle().path(in: CGRect(
+                x: center.x - r, y: center.y - r,
+                width: r * 2, height: r * 2
+            )),
+            with: .radialGradient(
+                Gradient(colors: [
+                    Color(red: 0.04, green: 0.08, blue: 0.10).opacity(0.95),
+                    Color(red: 0.05, green: 0.10, blue: 0.12).opacity(0.85),
+                    irisColor.opacity(0.15),
+                    Theme.void.opacity(0.8),
+                ]),
+                center: lightOffset, startRadius: r * 0.1, endRadius: r
+            )
+        )
+
+        // Subsurface scatter — additive inner glow
+        ctx.drawLayer { ssCtx in
+            ssCtx.blendMode = .plusLighter
+            let scatterPulse = (sin(time * 1.5 + 1.2) + 1) / 2
+            ssCtx.fill(
+                Circle().path(in: CGRect(
+                    x: center.x - r * 0.7, y: center.y - r * 0.7,
+                    width: r * 1.4, height: r * 1.4
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [
+                        irisColor.opacity(0.08 * (0.5 + scatterPulse * 0.5)),
+                        .clear
+                    ]),
+                    center: center, startRadius: 0, endRadius: r * 0.7
+                )
+            )
+        }
+    }
+
+    // MARK: - Pass 6: Central Eye
 
     private func drawEye(
         ctx: inout GraphicsContext, center: CGPoint, maxR: Double, time: Double
     ) {
         let activity = state.overallUtilization / 100.0
-        let eyeR = maxR * 0.15
+        let eyeR = maxR * 0.22
         let irisColor = irisBaseColor(activity: activity)
 
         // Pupil dilation: small when calm, wide when critical
@@ -394,7 +476,7 @@ struct AnemoneView_iOS: View {
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, time: Double
     ) {
-        let collarR = maxR * 0.32
+        let collarR = maxR * 0.35
         let pulse = (sin(time * 1.2) + 1) / 2
         let activity = state.overallUtilization / 100.0
         let collarColor = irisBaseColor(activity: activity)
@@ -408,11 +490,11 @@ struct AnemoneView_iOS: View {
             )
             cCtx.stroke(
                 Circle().path(in: ringRect),
-                with: .color(collarColor.opacity(0.12 + pulse * 0.06)),
-                lineWidth: 2.0
+                with: .color(collarColor.opacity(0.15 + pulse * 0.08)),
+                lineWidth: 2.5
             )
 
-            let bloomR = collarR * 1.25
+            let bloomR = collarR * 1.3
             cCtx.fill(
                 Circle().path(in: CGRect(
                     x: center.x - bloomR, y: center.y - bloomR,
@@ -421,8 +503,8 @@ struct AnemoneView_iOS: View {
                 with: .radialGradient(
                     Gradient(colors: [
                         .clear,
-                        collarColor.opacity(0.04),
-                        collarColor.opacity(0.02),
+                        collarColor.opacity(0.06),
+                        collarColor.opacity(0.03),
                         .clear
                     ]),
                     center: center,
@@ -441,7 +523,7 @@ struct AnemoneView_iOS: View {
     ) -> [CGPoint] {
         let pct = desc.pct
         let norm = pct / 100.0
-        let collarR = maxR * 0.32
+        let collarR = maxR * 0.35
         let tentacleLen = maxR * (0.15 + norm * 0.85)
         let waveSpeed = 0.5 + norm * 1.5
         let angle = desc.angle
@@ -736,6 +818,50 @@ struct AnemoneView_iOS: View {
                 let breathe = (sin(time * 0.8 + Double(i) * 0.5) + 1) / 2
                 wCtx.fill(webPath, with: .color(Theme.nucleusCool.opacity(0.012 + breathe * 0.008)))
             }
+        }
+    }
+
+    // MARK: - Floating Spores
+
+    private func drawSpores(ctx: inout GraphicsContext, size: CGSize, time: Double) {
+        let sporeColors: [Color] = [
+            Theme.sessionOrbit,   // cyan
+            Theme.outerOrbit,     // gold
+            Theme.weeklyOrbit,    // lavender
+        ]
+
+        for spore in spores {
+            let color = sporeColors[Int(abs(spore.seed)) % sporeColors.count]
+            let rawY = fmod(time * spore.cycleSpeed + spore.seed * 0.1, 1.0)
+            let y = size.height - rawY * size.height * 0.9
+            let wander = sin(time * 0.4 + spore.seed) * 20
+            let x = spore.baseX * size.width + wander
+
+            let fade = min(rawY / 0.1, (1 - rawY) / 0.1, 1.0)
+            let sporeR = 2.5 + sin(spore.seed + time * 0.8) * 1.0
+
+            // Outer glow
+            ctx.fill(
+                Circle().path(in: CGRect(
+                    x: x - sporeR * 3, y: y - sporeR * 3,
+                    width: sporeR * 6, height: sporeR * 6
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.15 * fade), .clear]),
+                    center: CGPoint(x: x, y: y),
+                    startRadius: 0,
+                    endRadius: sporeR * 3
+                )
+            )
+
+            // Bright core
+            ctx.fill(
+                Circle().path(in: CGRect(
+                    x: x - sporeR * 0.5, y: y - sporeR * 0.5,
+                    width: sporeR, height: sporeR
+                )),
+                with: .color(color.opacity(0.4 * fade))
+            )
         }
     }
 
