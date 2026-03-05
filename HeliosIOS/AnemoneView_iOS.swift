@@ -173,10 +173,7 @@ struct AnemoneView_iOS: View {
         // Pass 1: Ambient halo
         drawHalo(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
 
-        // Pass 2: Body mass (fills center, connects collar to eye)
-        drawBodyMass(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
-
-        // Pass 3: Collar ring
+        // Pass 2: Collar ring
         drawCollar(ctx: &ctx, center: center, maxR: maxR, time: time)
 
         // Accumulate spine arrays for webbing
@@ -198,8 +195,8 @@ struct AnemoneView_iOS: View {
         // Pass 5: Membrane webbing
         drawWebbing(ctx: &ctx, spines: allSpines, time: time)
 
-        // Pass 6: Central eye (on top of everything)
-        drawEye(ctx: &ctx, center: center, maxR: maxR, time: time)
+        // Pass 6: Eye (on top of everything)
+        drawEye(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
     }
 
     // MARK: - Pass 1: Ambient Halo
@@ -242,89 +239,16 @@ struct AnemoneView_iOS: View {
         }
     }
 
-    // MARK: - Pass 2: Body Mass
+    // MARK: - Pass 6: Eye (unified eyeball + iris + pupil)
 
-    private func drawBodyMass(
+    private func drawEye(
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, activity: Double, time: Double
     ) {
-        let bodyR = maxR * 0.30
-        let breathe = sin(time * 1.2) * 0.04
-        let r = bodyR * (1.0 + breathe)
         let irisColor = irisBaseColor(activity: activity)
-
-        // Outer soft body glow
-        let outerR = r * 2.2
-        ctx.drawLayer { bCtx in
-            bCtx.blendMode = .screen
-            bCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - outerR, y: center.y - outerR,
-                    width: outerR * 2, height: outerR * 2
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [
-                        irisColor.opacity(0.18),
-                        Theme.nucleusCool.opacity(0.08),
-                        .clear
-                    ]),
-                    center: center, startRadius: r * 0.5, endRadius: outerR
-                )
-            )
-        }
-
-        // Main body sphere — offset gradient for 3D illusion
-        let lightOffset = CGPoint(x: center.x - r * 0.15, y: center.y - r * 0.2)
-        ctx.fill(
-            Circle().path(in: CGRect(
-                x: center.x - r, y: center.y - r,
-                width: r * 2, height: r * 2
-            )),
-            with: .radialGradient(
-                Gradient(colors: [
-                    Color(red: 0.04, green: 0.08, blue: 0.10).opacity(0.95),
-                    Color(red: 0.05, green: 0.10, blue: 0.12).opacity(0.85),
-                    irisColor.opacity(0.15),
-                    Theme.void.opacity(0.8),
-                ]),
-                center: lightOffset, startRadius: r * 0.1, endRadius: r
-            )
-        )
-
-        // Subsurface scatter — additive inner glow
-        ctx.drawLayer { ssCtx in
-            ssCtx.blendMode = .plusLighter
-            let scatterPulse = (sin(time * 1.5 + 1.2) + 1) / 2
-            ssCtx.fill(
-                Circle().path(in: CGRect(
-                    x: center.x - r * 0.7, y: center.y - r * 0.7,
-                    width: r * 1.4, height: r * 1.4
-                )),
-                with: .radialGradient(
-                    Gradient(colors: [
-                        irisColor.opacity(0.08 * (0.5 + scatterPulse * 0.5)),
-                        .clear
-                    ]),
-                    center: center, startRadius: 0, endRadius: r * 0.7
-                )
-            )
-        }
-    }
-
-    // MARK: - Pass 6: Central Eye
-
-    private func drawEye(
-        ctx: inout GraphicsContext, center: CGPoint, maxR: Double, time: Double
-    ) {
-        let activity = state.overallUtilization / 100.0
-        let eyeR = maxR * 0.22
-        let irisColor = irisBaseColor(activity: activity)
-
-        // Pupil dilation: small when calm, wide when critical
-        let dilation = 0.25 + activity * 0.45
-        let pupilR = eyeR * dilation
-
-        // Pulse rate: 0.3 Hz calm → 1.0 Hz critical
+        let eyeR = maxR * 0.32          // fills up to the collar
+        let pupilR = eyeR * (0.20 + activity * 0.20)  // dilates with usage
+        let irisInner = pupilR * 1.3    // iris starts just outside pupil
         let pulseRate = 0.3 + activity * 0.7
         let pulse = (sin(time * pulseRate * .pi * 2) + 1) / 2
 
@@ -333,8 +257,8 @@ struct AnemoneView_iOS: View {
             width: eyeR * 2, height: eyeR * 2
         )
 
-        // Layer 1: Outer glow — pulsing radial around iris
-        let glowR = eyeR * (1.15 + pulse * 0.2)
+        // Layer 1: Atmospheric glow (extends beyond eye)
+        let glowR = eyeR * 1.6
         ctx.drawLayer { gCtx in
             gCtx.blendMode = .screen
             gCtx.fill(
@@ -344,39 +268,61 @@ struct AnemoneView_iOS: View {
                 )),
                 with: .radialGradient(
                     Gradient(colors: [
-                        irisColor.opacity(0.2 * (0.5 + pulse * 0.5)),
-                        irisColor.opacity(0.05),
+                        irisColor.opacity(0.20 * (0.6 + pulse * 0.4)),
+                        irisColor.opacity(0.08),
+                        Theme.nucleusCool.opacity(0.03),
                         .clear
                     ]),
-                    center: center, startRadius: eyeR * 0.2, endRadius: glowR
+                    center: center, startRadius: eyeR * 0.3, endRadius: glowR
                 )
             )
         }
 
-        // Layer 2: Primary radial iris — void pupil → color band → void edge
+        // Layer 2: Opaque eyeball (dark sclera base)
+        let lightOffset = CGPoint(x: center.x - eyeR * 0.12, y: center.y - eyeR * 0.15)
         ctx.fill(
             Circle().path(in: eyeRect),
             with: .radialGradient(
                 Gradient(colors: [
+                    Color(red: 0.02, green: 0.04, blue: 0.06),
+                    Color(red: 0.03, green: 0.06, blue: 0.08),
+                    Color(red: 0.04, green: 0.07, blue: 0.09).opacity(0.95),
                     Theme.void,
-                    Theme.void.opacity(0.9),
-                    irisColor.opacity(0.8),
-                    irisColor.opacity(0.3),
-                    Theme.void.opacity(0.9),
                 ]),
-                center: center, startRadius: pupilR * 0.3, endRadius: eyeR
+                center: lightOffset, startRadius: 0, endRadius: eyeR
             )
         )
 
-        // Layer 3: Multi-hue conic overlay — tentacle colors driven by usage %
-        let cyanOp = state.fiveHourPct / 100.0 * 0.4
-        let goldOp = state.sonnetPct / 100.0 * 0.35
-        let lavOp = state.sevenDayPct / 100.0 * 0.3
+        // Layer 3: Iris — continuous filled color from pupil edge to near outer edge
+        // Key: NO void at the outer edge — iris color fills outward and fades gently
+        ctx.drawLayer { irCtx in
+            irCtx.blendMode = .screen
+            irCtx.fill(
+                Circle().path(in: eyeRect),
+                with: .radialGradient(
+                    Gradient(stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .clear, location: pupilR / eyeR),
+                        .init(color: irisColor.opacity(0.5), location: irisInner / eyeR),
+                        .init(color: irisColor.opacity(0.85), location: 0.50),
+                        .init(color: irisColor.opacity(0.70), location: 0.70),
+                        .init(color: irisColor.opacity(0.30), location: 0.88),
+                        .init(color: irisColor.opacity(0.05), location: 1.0),
+                    ]),
+                    center: center, startRadius: 0, endRadius: eyeR
+                )
+            )
+        }
+
+        // Layer 4: Conic multi-hue overlay (usage colors rotate through iris)
+        let cyanOp = state.fiveHourPct / 100.0 * 0.5
+        let goldOp = state.sonnetPct / 100.0 * 0.45
+        let lavOp = state.sevenDayPct / 100.0 * 0.4
         let irisRotation = Angle(radians: time * 0.15)
 
         ctx.drawLayer { iCtx in
             iCtx.blendMode = .screen
-            iCtx.opacity = 0.25
+            iCtx.opacity = 0.3
             iCtx.fill(
                 Circle().path(in: eyeRect),
                 with: .conicGradient(
@@ -393,26 +339,66 @@ struct AnemoneView_iOS: View {
                     angle: irisRotation
                 )
             )
-            // Mask: only show conic in iris band, not pupil
+            // Radial mask: only show conic in iris band (not pupil, not outer edge)
             iCtx.fill(
                 Circle().path(in: eyeRect),
                 with: .radialGradient(
-                    Gradient(colors: [
-                        .clear,
-                        .clear,
-                        .white.opacity(0.6),
-                        .white.opacity(0.3),
-                        .clear,
+                    Gradient(stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .clear, location: pupilR / eyeR),
+                        .init(color: .white.opacity(0.3), location: irisInner / eyeR),
+                        .init(color: .white.opacity(0.7), location: 0.50),
+                        .init(color: .white.opacity(0.5), location: 0.75),
+                        .init(color: .clear, location: 0.92),
                     ]),
-                    center: center, startRadius: pupilR * 0.2, endRadius: eyeR
+                    center: center, startRadius: 0, endRadius: eyeR
                 )
             )
         }
 
-        // Layer 4: High-usage pulse — red flicker in pupil when any metric > 80%
+        // Layer 5: Iris fibrous texture (radial streaks for organic detail)
+        ctx.drawLayer { fCtx in
+            fCtx.blendMode = .screen
+            let streakCount = 24
+            for i in 0..<streakCount {
+                let angle = Double(i) * .pi * 2 / Double(streakCount) + time * 0.02
+                let wobble = sin(time * 0.3 + Double(i) * 1.3) * 0.06
+                let innerPt = CGPoint(
+                    x: center.x + cos(angle) * irisInner,
+                    y: center.y + sin(angle) * irisInner
+                )
+                let outerPt = CGPoint(
+                    x: center.x + cos(angle + wobble) * eyeR * 0.85,
+                    y: center.y + sin(angle + wobble) * eyeR * 0.85
+                )
+                var streak = Path()
+                streak.move(to: innerPt)
+                streak.addLine(to: outerPt)
+                let streakPulse = (sin(time * 0.8 + Double(i) * 0.5) + 1) / 2
+                fCtx.stroke(streak, with: .color(irisColor.opacity(0.06 + streakPulse * 0.04)), lineWidth: 1.2)
+            }
+        }
+
+        // Layer 6: Pupil depth (deep black center with soft edge)
+        ctx.fill(
+            Circle().path(in: CGRect(
+                x: center.x - pupilR, y: center.y - pupilR,
+                width: pupilR * 2, height: pupilR * 2
+            )),
+            with: .radialGradient(
+                Gradient(colors: [
+                    Color(red: 0.01, green: 0.01, blue: 0.02),
+                    Color(red: 0.01, green: 0.01, blue: 0.02),
+                    Color(red: 0.02, green: 0.03, blue: 0.04).opacity(0.8),
+                ]),
+                center: center, startRadius: 0, endRadius: pupilR
+            )
+        )
+
+        // Layer 7: High-usage pulse — red flicker when any metric > 80%
         let maxPct = max(state.fiveHourPct, state.sonnetPct, state.sevenDayPct)
         if maxPct > 80 {
-            let urgency = (maxPct - 80) / 20.0   // 0→1 across 80→100%
+            let urgency = (maxPct - 80) / 20.0
             let errPulse = (sin(time * 3.5) + 1) / 2
             ctx.drawLayer { eCtx in
                 eCtx.blendMode = .plusLighter
@@ -420,8 +406,8 @@ struct AnemoneView_iOS: View {
                     Circle().path(in: eyeRect),
                     with: .radialGradient(
                         Gradient(colors: [
-                            Theme.nucleusHot.opacity(0.15 * errPulse * urgency),
-                            Theme.nucleusHot.opacity(0.05 * errPulse * urgency),
+                            Theme.nucleusHot.opacity(0.12 * errPulse * urgency),
+                            Theme.nucleusHot.opacity(0.04 * errPulse * urgency),
                             .clear
                         ]),
                         center: center, startRadius: 0, endRadius: eyeR * 0.5
@@ -430,34 +416,34 @@ struct AnemoneView_iOS: View {
             }
         }
 
-        // Layer 5: Rim light — white arc on upper edge for 3D depth
+        // Layer 8: Rim light — upper arc for spherical depth
         ctx.drawLayer { rCtx in
             rCtx.blendMode = .plusLighter
             let rimArc = Path { p in
                 p.addArc(center: center, radius: eyeR * 0.92,
-                         startAngle: .degrees(-140), endAngle: .degrees(-40),
+                         startAngle: .degrees(-150), endAngle: .degrees(-30),
                          clockwise: false)
             }
-            rCtx.stroke(rimArc, with: .color(irisColor.opacity(0.2)), lineWidth: 1.5)
+            rCtx.stroke(rimArc, with: .color(irisColor.opacity(0.15 + pulse * 0.1)), lineWidth: 2.0)
         }
 
-        // Layer 6: Specular highlights — two-point for sphere illusion
-        let specX = center.x - eyeR * 0.28
-        let specY = center.y - eyeR * 0.28
-        let specR = eyeR * 0.18
+        // Layer 9: Specular highlights
+        let specX = center.x - eyeR * 0.25
+        let specY = center.y - eyeR * 0.25
+        let specR = eyeR * 0.14
         ctx.fill(
             Circle().path(in: CGRect(
                 x: specX - specR, y: specY - specR,
                 width: specR * 2, height: specR * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.7), .clear]),
+                Gradient(colors: [.white.opacity(0.6), .white.opacity(0.15), .clear]),
                 center: CGPoint(x: specX, y: specY), startRadius: 0, endRadius: specR
             )
         )
-        let spec2X = center.x + eyeR * 0.2
-        let spec2Y = center.y + eyeR * 0.15
-        let spec2R = eyeR * 0.08
+        let spec2X = center.x + eyeR * 0.18
+        let spec2Y = center.y + eyeR * 0.12
+        let spec2R = eyeR * 0.07
         ctx.fill(
             Circle().path(in: CGRect(
                 x: spec2X - spec2R, y: spec2Y - spec2R,
