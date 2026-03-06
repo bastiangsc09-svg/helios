@@ -215,7 +215,7 @@ struct SettingsView_iOS: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Tentacle Size")
+                    Text("Tentacle Thickness")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.stardust.opacity(0.7))
                     Spacer()

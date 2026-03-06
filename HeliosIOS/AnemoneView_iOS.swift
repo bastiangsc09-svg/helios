@@ -937,7 +937,8 @@ struct AnemoneView_iOS: View {
         let pct = desc.pct
         let norm = pct / 100.0
         let collarR = maxR * 0.37 * irisScale
-        let tentacleLen = maxR * (0.15 + norm * 0.85) * tentacleScale
+        let tentacleLen = maxR * (0.15 + norm * 0.85)
+        let thk = tentacleScale  // thickness multiplier from settings
         let waveSpeed = 0.5 + norm * 1.5
         let angle = desc.angle
         let segments = 20
@@ -986,7 +987,7 @@ struct AnemoneView_iOS: View {
         for s in 0...segments {
             let t = Double(s) / Double(segments)
             let helixPhase = sin(t * helixFreq + time * waveSpeed * 0.5 + seed)
-            let amp = (3.0 - t * 2.0) * (1.0 + norm * 0.5)
+            let amp = (3.0 - t * 2.0) * (1.0 + norm * 0.5) * thk
             strandA.append(CGPoint(
                 x: points[s].x + perpX * amp * helixPhase,
                 y: points[s].y + perpY * amp * helixPhase
@@ -1003,7 +1004,7 @@ struct AnemoneView_iOS: View {
             var glowPath = Path()
             glowPath.move(to: points[0])
             for s in 1...segments { glowPath.addLine(to: points[s]) }
-            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 14)
+            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 14 * thk)
         }
 
         // 4c: Double-helix DNA strands with 3-zone color gradient
@@ -1026,7 +1027,7 @@ struct AnemoneView_iOS: View {
 
             let taper = 2.5 - 2.0 * t1
             let undulation = 1.0 + sin(time * 1.5 + seed + tMid * 12) * 0.15
-            let strandWidth = taper * undulation
+            let strandWidth = taper * undulation * thk
 
             // Strand A
             var segA = Path()
@@ -1059,8 +1060,8 @@ struct AnemoneView_iOS: View {
             var innerPath = Path()
             innerPath.move(to: points[0])
             for s in 1...segments { innerPath.addLine(to: points[s]) }
-            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 2.5)
-            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10 + tI * 0.05)), lineWidth: 0.8)
+            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 2.5 * thk)
+            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10 + tI * 0.05)), lineWidth: 0.8 * thk)
         }
 
         // 4e: Photophore nodes at segments 4, 8, 12, 16
