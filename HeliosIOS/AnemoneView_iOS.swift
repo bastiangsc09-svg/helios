@@ -250,19 +250,84 @@ struct AnemoneView_iOS: View {
                 }
 
                 if let error = state.error, state.usage == nil {
-                    VStack(spacing: 8) {
+                    // Full error — no data yet
+                    VStack(spacing: 10) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 24))
-                            .foregroundStyle(Theme.tierCritical)
+                            .font(.system(size: 28))
+                            .foregroundStyle(Theme.sessionOrbit)
+                        Text("Connection Error")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Theme.stardust)
                         Text(error)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.stardust.opacity(0.7))
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.stardust.opacity(0.6))
                             .multilineTextAlignment(.center)
+                            .lineLimit(3)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 18)
+                    .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 16))
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Theme.sessionOrbit.opacity(0.15),
+                                        Theme.weeklyOrbit.opacity(0.1),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 4
+                            )
+                            .blur(radius: 6)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Theme.sessionOrbit.opacity(0.4),
+                                        Theme.weeklyOrbit.opacity(0.25),
+                                        Theme.sessionOrbit.opacity(0.3),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.75
+                            )
+                    )
+                    .shadow(color: Theme.sessionOrbit.opacity(0.15), radius: 8)
+                    .shadow(color: Theme.weeklyOrbit.opacity(0.08), radius: 16)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
+
+                if state.error != nil, state.usage != nil {
+                    // Stale data banner — small pill at top
+                    VStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "wifi.exclamationmark")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.sessionOrbit)
+                            Text("Offline — showing cached data")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(Theme.stardust.opacity(0.6))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.black.opacity(0.3), in: Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(
+                                    Theme.sessionOrbit.opacity(0.3),
+                                    lineWidth: 0.5
+                                )
+                        )
+                        .shadow(color: Theme.sessionOrbit.opacity(0.1), radius: 6)
+                        .padding(.top, 60)
+                        Spacer()
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
         }
