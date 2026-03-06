@@ -1331,6 +1331,24 @@ struct AnemoneView_iOS: View {
         }
         .padding(.horizontal, expanded ? 24 : 16)
         .padding(.vertical, expanded ? 14 : 10)
+        .overlay(
+            Capsule()
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Theme.sessionOrbit.opacity(0.5),
+                            Theme.weeklyOrbit.opacity(0.3),
+                            Theme.outerOrbit.opacity(0.5),
+                            Theme.sessionOrbit.opacity(0.3),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.75
+                )
+        )
+        .shadow(color: Theme.sessionOrbit.opacity(0.15), radius: 8)
+        .shadow(color: Theme.weeklyOrbit.opacity(0.08), radius: 16)
         .contentShape(Capsule())
         .onTapGesture {
             withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
