@@ -12,7 +12,7 @@ struct ContentView_iOS: View {
             if state.hasSessionConfig {
                 AnemoneView_iOS(state: state)
 
-                // Settings gear — top trailing
+                // Settings gear — Liquid Glass circle
                 VStack {
                     HStack {
                         Spacer()
@@ -20,14 +20,10 @@ struct ContentView_iOS: View {
                             showSettings = true
                         } label: {
                             Image(systemName: "gearshape.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(.white.opacity(0.9))
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(.white.opacity(0.1))
-                                        .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
-                                )
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(.white)
+                                .frame(width: 40, height: 40)
+                                .glassEffect(.regular.interactive(), in: .circle)
                         }
                         .padding(.trailing, 16)
                         .padding(.top, 8)
@@ -65,9 +61,7 @@ struct ContentView_iOS: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 28)
                             .padding(.vertical, 14)
-                            .background(Theme.sessionOrbit.opacity(0.3), in: Capsule())
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
+                            .glassEffect(.regular.tint(Theme.sessionOrbit).interactive(), in: .capsule)
                     }
 
                     Spacer()
