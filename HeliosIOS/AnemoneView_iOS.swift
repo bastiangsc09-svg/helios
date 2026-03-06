@@ -15,6 +15,25 @@ private final class HitCache {
     var midpoints: [Target] = []
 }
 
+// MARK: - Touch State (class — no @State re-renders, read by Canvas each frame)
+
+private final class TouchState {
+    var location: CGPoint = .zero
+    var isActive: Bool = false
+    var intensity: Double = 0       // 0-1, ramps up on touch, decays on release
+    private var lastTime: Double = 0
+
+    func update(time: Double) {
+        let dt = lastTime == 0 ? 1.0 / 30.0 : min(time - lastTime, 0.1)
+        lastTime = time
+        if isActive {
+            intensity = min(intensity + dt * 5.0, 1.0)     // fast ramp up
+        } else {
+            intensity = max(intensity - dt * 2.0, 0.0)     // smooth decay
+        }
+    }
+}
+
 // MARK: - Tentacle Descriptor
 
 private struct TentacleDesc {
@@ -53,6 +72,7 @@ struct AnemoneView_iOS: View {
     }
 
     private let hitCache = HitCache()
+    private let touchState = TouchState()
 
     var body: some View {
         GeometryReader { geo in
@@ -78,15 +98,30 @@ struct AnemoneView_iOS: View {
                     }
                     .allowsHitTesting(false)
 
-                    // 3. Tap detection
+                    // Touch detection (drag for continuous tracking, tap for tooltips)
                     Color.clear
                         .contentShape(Rectangle())
                         .frame(height: orreryHeight)
-                        .onTapGesture { location in
-                            handleTap(at: location)
-                        }
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    touchState.location = value.location
+                                    touchState.isActive = true
+                                }
+                                .onEnded { value in
+                                    touchState.isActive = false
+                                    // Short drags = taps → show tooltip
+                                    let dragDist = hypot(
+                                        value.location.x - value.startLocation.x,
+                                        value.location.y - value.startLocation.y
+                                    )
+                                    if dragDist < 15 {
+                                        handleTap(at: value.location)
+                                    }
+                                }
+                        )
 
-                    // 5. Tooltip
+                    // Tooltip
                     if let t = tapped {
                         tooltipView(for: t)
                             .position(t.position)
@@ -97,7 +132,7 @@ struct AnemoneView_iOS: View {
                 .frame(height: orreryHeight)
                 .frame(maxHeight: .infinity, alignment: .top)
 
-                // 6. Readout bar
+                // Readout bar
                 VStack {
                     Spacer()
                     readoutBar
@@ -170,6 +205,9 @@ struct AnemoneView_iOS: View {
     ) {
         let activity = state.overallUtilization / 100.0
 
+        // Update touch intensity (smooth ramp/decay)
+        touchState.update(time: time)
+
         // Pass 1: Ambient halo
         drawHalo(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
 
@@ -205,8 +243,9 @@ struct AnemoneView_iOS: View {
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, activity: Double, time: Double
     ) {
+        let touchBoost = touchState.intensity * 0.08
         let haloR = maxR * 3.0
-        let intensity = 0.06 + activity * 0.10
+        let intensity = 0.06 + activity * 0.10 + touchBoost
         let irisColor = irisBaseColor(activity: activity)
         ctx.drawLayer { hCtx in
             hCtx.blendMode = .screen
@@ -226,6 +265,31 @@ struct AnemoneView_iOS: View {
                 )
             )
         }
+
+        // Touch proximity glow — bright spot near finger
+        if touchState.intensity > 0.01 {
+            let tI = touchState.intensity
+            let glowR = maxR * 0.8
+            ctx.drawLayer { tCtx in
+                tCtx.blendMode = .plusLighter
+                tCtx.fill(
+                    Circle().path(in: CGRect(
+                        x: touchState.location.x - glowR,
+                        y: touchState.location.y - glowR,
+                        width: glowR * 2, height: glowR * 2
+                    )),
+                    with: .radialGradient(
+                        Gradient(colors: [
+                            irisColor.opacity(0.12 * tI),
+                            irisColor.opacity(0.04 * tI),
+                            .clear
+                        ]),
+                        center: touchState.location,
+                        startRadius: 0, endRadius: glowR
+                    )
+                )
+            }
+        }
     }
 
     // MARK: - Iris Base Color
@@ -239,53 +303,67 @@ struct AnemoneView_iOS: View {
         }
     }
 
-    // MARK: - Pass 5: Iris
+    // MARK: - Pass 5: Iris (Alien)
 
     private func drawIris(
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, activity: Double, time: Double
     ) {
+        let tI = touchState.intensity
         let irisR = maxR * 0.34
-        let pupilR = irisR * (0.28 + activity * 0.12)  // dilates with usage
-        let collaretteR = irisR * 0.48                  // jagged boundary ~1/3 out
-        let limbalR = irisR * 0.96                      // dark outer ring
-        let fiberCount = 80                              // radial muscle fibers
+        // Pupil dilates with usage AND touch
+        let pupilR = irisR * (0.28 + activity * 0.12 + tI * 0.08)
+        let collaretteR = irisR * 0.48
+        let limbalR = irisR * 0.96
+        let fiberCount = 80
         let pulse = (sin(time * (0.8 + activity * 0.6)) + 1) / 2
 
-        // Usage-driven colors: inner zone warm, outer zone cool
-        // Map the 3 tentacle colors into iris zones
+        // Slow alien rotation of the entire fiber field
+        let irisRotation = time * 0.03
+
+        // Usage-driven colors
         let innerColor = Theme.outerOrbit        // gold/amber (inner stroma)
         let outerColor = Theme.sessionOrbit       // cyan/teal (outer stroma)
-        let accentColor = Theme.weeklyOrbit       // lavender (crypts)
+        let accentColor = Theme.weeklyOrbit       // lavender (crypts + nerve lines)
+
+        // Touch-reactive opacity boost
+        let touchBright = tI * 0.06
 
         let irisRect = CGRect(
             x: center.x - irisR, y: center.y - irisR,
             width: irisR * 2, height: irisR * 2
         )
 
-        // ── Layer 1: Dark base fill (the "sclera" behind the iris) ──
+        // ── Layer 1: Dark base fill (semi-transparent for alien look) ──
         ctx.fill(
             Circle().path(in: irisRect),
-            with: .color(Color(hex: "040608"))
+            with: .radialGradient(
+                Gradient(colors: [
+                    Color(hex: "040608").opacity(0.85),
+                    Color(hex: "040608").opacity(0.95),
+                    Color(hex: "030406")
+                ]),
+                center: center, startRadius: 0, endRadius: irisR
+            )
         )
 
-        // ── Layer 2: Limbal ring (dark outer border) ──
+        // ── Layer 2: Limbal ring (darker outer border, slightly translucent) ──
         ctx.drawLayer { lCtx in
             lCtx.fill(
                 Circle().path(in: irisRect),
                 with: .radialGradient(
                     Gradient(stops: [
                         .init(color: .clear, location: 0.0),
-                        .init(color: .clear, location: 0.85),
-                        .init(color: Color(hex: "0A1520").opacity(0.9), location: 0.92),
-                        .init(color: Color(hex: "060D14"), location: 1.0),
+                        .init(color: .clear, location: 0.82),
+                        .init(color: Color(hex: "0A1520").opacity(0.7), location: 0.90),
+                        .init(color: Color(hex: "060D14").opacity(0.85), location: 1.0),
                     ]),
                     center: center, startRadius: 0, endRadius: irisR
                 )
             )
         }
 
-        // ── Layer 3: Base stroma color (two-zone radial: gold inner, teal outer) ──
+        // ── Layer 3: Base stroma (two-zone, more transparent) ──
         ctx.drawLayer { sCtx in
             sCtx.blendMode = .screen
             sCtx.fill(
@@ -294,12 +372,12 @@ struct AnemoneView_iOS: View {
                     Gradient(stops: [
                         .init(color: .clear, location: 0.0),
                         .init(color: .clear, location: pupilR / irisR),
-                        .init(color: innerColor.opacity(0.25), location: pupilR / irisR + 0.03),
-                        .init(color: innerColor.opacity(0.45), location: collaretteR / irisR - 0.05),
-                        .init(color: innerColor.opacity(0.35), location: collaretteR / irisR),
-                        .init(color: outerColor.opacity(0.30), location: collaretteR / irisR + 0.05),
-                        .init(color: outerColor.opacity(0.45), location: 0.75),
-                        .init(color: outerColor.opacity(0.25), location: limbalR / irisR),
+                        .init(color: innerColor.opacity(0.18 + touchBright), location: pupilR / irisR + 0.03),
+                        .init(color: innerColor.opacity(0.32 + touchBright), location: collaretteR / irisR - 0.05),
+                        .init(color: innerColor.opacity(0.22 + touchBright), location: collaretteR / irisR),
+                        .init(color: outerColor.opacity(0.20 + touchBright), location: collaretteR / irisR + 0.05),
+                        .init(color: outerColor.opacity(0.35 + touchBright), location: 0.75),
+                        .init(color: outerColor.opacity(0.18 + touchBright), location: limbalR / irisR),
                         .init(color: .clear, location: 1.0),
                     ]),
                     center: center, startRadius: 0, endRadius: irisR
@@ -307,76 +385,22 @@ struct AnemoneView_iOS: View {
             )
         }
 
-        // ── Layer 4: Radial muscle fibers (the defining texture of an iris) ──
+        // ── Layer 4: Radial muscle fibers (rotated, more transparent) ──
         ctx.drawLayer { fCtx in
             fCtx.blendMode = .screen
 
             for i in 0..<fiberCount {
                 let fi = Double(i)
-                let seed = fi * 137.508  // golden angle distribution
-                let baseAngle = fi * .pi * 2.0 / Double(fiberCount)
+                let seed = fi * 137.508
+                let baseAngle = fi * .pi * 2.0 / Double(fiberCount) + irisRotation
 
-                // Gentle organic wobble per fiber
-                let wobble = sin(seed * 3.7 + time * 0.08) * 0.04
-                    + sin(seed * 7.1) * 0.02
+                let wobble = sin(seed * 3.7 + time * 0.08) * 0.05
+                    + sin(seed * 7.1) * 0.025
+                    + sin(seed * 11.3 + time * 0.12) * 0.015  // extra organic harmonic
                 let angle = baseAngle + wobble
 
-                // Fiber starts just outside pupil, ends near limbus
                 let startR = pupilR + irisR * 0.02
                 let endR = limbalR - irisR * 0.01 + sin(seed * 2.3) * irisR * 0.03
-
-                // Control point for slight curve (fibers aren't perfectly straight)
-                let midR = (startR + endR) / 2
-                let curveBias = sin(seed * 5.1 + time * 0.05) * irisR * 0.04
-                let perpAngle = angle + .pi / 2
-
-                let startPt = CGPoint(
-                    x: center.x + cos(angle) * startR,
-                    y: center.y + sin(angle) * startR
-                )
-                let endPt = CGPoint(
-                    x: center.x + cos(angle) * endR,
-                    y: center.y + sin(angle) * endR
-                )
-                let ctrlPt = CGPoint(
-                    x: center.x + cos(angle) * midR + cos(perpAngle) * curveBias,
-                    y: center.y + sin(angle) * midR + sin(perpAngle) * curveBias
-                )
-
-                var fiber = Path()
-                fiber.move(to: startPt)
-                fiber.addQuadCurve(to: endPt, control: ctrlPt)
-
-                // Fiber color: gold near pupil, transitions to teal past collarette
-                // Each fiber has slight unique brightness variation
-                let brightVar = 0.7 + sin(seed * 1.9) * 0.3
-                let fiberPulse = (sin(time * 0.5 + seed * 0.3) + 1) / 2
-
-                // Width tapers: thicker near pupil, thinner at edge
-                let width = 1.2 + sin(seed * 4.3) * 0.4
-
-                // Inner fibers (pupil → collarette): warm gold
-                // Outer fibers drawn on top with teal
-                let opacity = (0.15 + fiberPulse * 0.08) * brightVar
-
-                // Draw inner portion (gold)
-                fCtx.stroke(fiber, with: .color(innerColor.opacity(opacity)), lineWidth: width)
-            }
-        }
-
-        // ── Layer 5: Outer fiber overlay (teal fibers from collarette outward) ──
-        ctx.drawLayer { oCtx in
-            oCtx.blendMode = .screen
-
-            for i in 0..<fiberCount {
-                let fi = Double(i)
-                let seed = fi * 137.508
-                let baseAngle = fi * .pi * 2.0 / Double(fiberCount)
-                let wobble = sin(seed * 3.7 + time * 0.08) * 0.04 + sin(seed * 7.1) * 0.02
-                let angle = baseAngle + wobble
-
-                let startR = collaretteR - irisR * 0.02
-                let endR = limbalR - irisR * 0.02 + sin(seed * 2.3) * irisR * 0.02
                 let midR = (startR + endR) / 2
                 let curveBias = sin(seed * 5.1 + time * 0.05) * irisR * 0.05
                 let perpAngle = angle + .pi / 2
@@ -398,27 +422,109 @@ struct AnemoneView_iOS: View {
                 fiber.move(to: startPt)
                 fiber.addQuadCurve(to: endPt, control: ctrlPt)
 
+                let brightVar = 0.7 + sin(seed * 1.9) * 0.3
+                let fiberPulse = (sin(time * 0.5 + seed * 0.3) + 1) / 2
+
+                // Occasional lavender flicker in some fibers (alien)
+                let useLavender = sin(seed * 13.7 + time * 0.2) > 0.85
+                let fiberColor = useLavender ? accentColor : innerColor
+
+                let width = 1.0 + sin(seed * 4.3) * 0.4
+                let opacity = (0.10 + fiberPulse * 0.06 + touchBright) * brightVar
+
+                fCtx.stroke(fiber, with: .color(fiberColor.opacity(opacity)), lineWidth: width)
+            }
+        }
+
+        // ── Layer 5: Outer fiber overlay (teal, rotated) ──
+        ctx.drawLayer { oCtx in
+            oCtx.blendMode = .screen
+
+            for i in 0..<fiberCount {
+                let fi = Double(i)
+                let seed = fi * 137.508
+                let baseAngle = fi * .pi * 2.0 / Double(fiberCount) + irisRotation
+                let wobble = sin(seed * 3.7 + time * 0.08) * 0.05
+                    + sin(seed * 7.1) * 0.025
+                let angle = baseAngle + wobble
+
+                let startR = collaretteR - irisR * 0.02
+                let endR = limbalR - irisR * 0.02 + sin(seed * 2.3) * irisR * 0.02
+                let midR = (startR + endR) / 2
+                let curveBias = sin(seed * 5.1 + time * 0.05) * irisR * 0.06
+                let perpAngle = angle + .pi / 2
+
+                let startPt = CGPoint(
+                    x: center.x + cos(angle) * startR,
+                    y: center.y + sin(angle) * startR
+                )
+                let endPt = CGPoint(
+                    x: center.x + cos(angle) * endR,
+                    y: center.y + sin(angle) * endR
+                )
+                let ctrlPt = CGPoint(
+                    x: center.x + cos(angle) * midR + cos(perpAngle) * curveBias,
+                    y: center.y + sin(angle) * midR + sin(perpAngle) * curveBias
+                )
+
+                var fiber = Path()
+                fiber.move(to: startPt)
+                fiber.addQuadCurve(to: endPt, control: ctrlPt)
+
                 let brightVar = 0.6 + sin(seed * 2.7) * 0.4
                 let fiberPulse = (sin(time * 0.4 + seed * 0.5) + 1) / 2
-                let width = 1.0 + sin(seed * 3.1) * 0.3
-                let opacity = (0.12 + fiberPulse * 0.06) * brightVar
+                let width = 0.8 + sin(seed * 3.1) * 0.3
+                let opacity = (0.08 + fiberPulse * 0.05 + touchBright) * brightVar
 
                 oCtx.stroke(fiber, with: .color(outerColor.opacity(opacity)), lineWidth: width)
             }
         }
 
-        // ── Layer 6: Collarette ring (the jagged boundary between inner/outer stroma) ──
+        // ── Layer 6: Bioluminescent nerve threads (alien organic pattern) ──
+        ctx.drawLayer { nCtx in
+            nCtx.blendMode = .screen
+            let nerveCount = 12
+            for i in 0..<nerveCount {
+                let seed = Double(i) * 47.3 + 100
+                let startAngle = seed * 0.618 * .pi * 2 + irisRotation * 0.5
+                let arcLen = 0.3 + sin(seed * 2.1) * 0.15   // how far around the iris
+                let rBand = pupilR + (limbalR - pupilR) * (0.3 + fmod(seed * 0.23, 0.5))
+                let segments = 8
+
+                var nervePath = Path()
+                for s in 0...segments {
+                    let t = Double(s) / Double(segments)
+                    let a = startAngle + arcLen * t
+                    let rWobble = sin(t * 6 + time * 0.3 + seed) * irisR * 0.03
+                    let r = rBand + rWobble
+                    let pt = CGPoint(
+                        x: center.x + cos(a) * r,
+                        y: center.y + sin(a) * r
+                    )
+                    if s == 0 { nervePath.move(to: pt) }
+                    else { nervePath.addLine(to: pt) }
+                }
+
+                let nervePulse = (sin(time * 0.6 + seed * 1.3) + 1) / 2
+                let nerveOp = (0.06 + nervePulse * 0.04 + tI * 0.04)
+                nCtx.stroke(nervePath, with: .color(accentColor.opacity(nerveOp)), lineWidth: 0.8)
+                // Soft glow
+                nCtx.stroke(nervePath, with: .color(accentColor.opacity(nerveOp * 0.4)), lineWidth: 3.0)
+            }
+        }
+
+        // ── Layer 7: Collarette ring (jagged boundary) ──
         ctx.drawLayer { cCtx in
             cCtx.blendMode = .screen
             let segments = 48
             var collarPath = Path()
             for i in 0...segments {
                 let t = Double(i) / Double(segments)
-                let angle = t * .pi * 2
-                // Jagged edge — crypts and furrows
-                let jag = sin(angle * 12 + time * 0.1) * irisR * 0.015
-                    + sin(angle * 7 + 1.5) * irisR * 0.01
-                    + sin(angle * 19 + 0.7) * irisR * 0.006
+                let angle = t * .pi * 2 + irisRotation * 0.3
+                let jag = sin(angle * 12 + time * 0.1) * irisR * 0.018
+                    + sin(angle * 7 + 1.5) * irisR * 0.012
+                    + sin(angle * 19 + 0.7) * irisR * 0.008
+                    + sin(angle * 31 + time * 0.07) * irisR * 0.004  // extra alien irregularity
                 let r = collaretteR + jag
                 let pt = CGPoint(
                     x: center.x + cos(angle) * r,
@@ -428,53 +534,56 @@ struct AnemoneView_iOS: View {
                 else { collarPath.addLine(to: pt) }
             }
             collarPath.closeSubpath()
-            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.35)), lineWidth: 1.8)
-            // Soft glow around collarette
-            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.10)), lineWidth: 5.0)
+            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.30 + touchBright)), lineWidth: 1.5)
+            cCtx.stroke(collarPath, with: .color(innerColor.opacity(0.08 + touchBright * 0.5)), lineWidth: 5.0)
         }
 
-        // ── Layer 7: Crypts (darker spots scattered through stroma) ──
+        // ── Layer 8: Glowing crypts (bioluminescent spots — alien) ──
         ctx.drawLayer { crCtx in
-            crCtx.blendMode = .multiply
+            crCtx.blendMode = .screen
             let cryptCount = 20
             for i in 0..<cryptCount {
                 let seed = Double(i) * 97.3
-                let angle = seed * 0.618 * .pi * 2
+                let angle = seed * 0.618 * .pi * 2 + irisRotation * 0.2
                 let rNorm = 0.35 + fmod(seed * 0.37, 0.45)
                 let r = irisR * rNorm
                 let cx = center.x + cos(angle) * r
                 let cy = center.y + sin(angle) * r
-                let cryptR = irisR * (0.015 + sin(seed * 3.1) * 0.008)
-                let cryptOp = 0.3 + sin(seed * 2.7) * 0.15
+                let cryptR = irisR * (0.018 + sin(seed * 3.1) * 0.008)
+                let cryptPulse = (sin(time * 0.7 + seed * 2.7) + 1) / 2
+
+                // Glow color alternates between accent and outer
+                let glowColor = i % 3 == 0 ? accentColor : outerColor
+                let glowOp = (0.08 + cryptPulse * 0.06 + tI * 0.05)
 
                 crCtx.fill(
                     Circle().path(in: CGRect(
-                        x: cx - cryptR, y: cy - cryptR,
-                        width: cryptR * 2, height: cryptR * 2
+                        x: cx - cryptR * 2, y: cy - cryptR * 2,
+                        width: cryptR * 4, height: cryptR * 4
                     )),
                     with: .radialGradient(
                         Gradient(colors: [
-                            accentColor.opacity(cryptOp * 0.2),
-                            Color(hex: "0A0E14").opacity(cryptOp),
+                            glowColor.opacity(glowOp),
+                            glowColor.opacity(glowOp * 0.3),
                             .clear
                         ]),
                         center: CGPoint(x: cx, y: cy),
-                        startRadius: 0, endRadius: cryptR
+                        startRadius: 0, endRadius: cryptR * 2
                     )
                 )
             }
         }
 
-        // ── Layer 8: Pupil (deep black with soft irregular edge) ──
+        // ── Layer 9: Pupil (deep dark with organic irregular edge + inner glow) ──
         ctx.drawLayer { pCtx in
-            // Irregular pupil border via polygon
             let pupilSegs = 36
             var pupilPath = Path()
             for i in 0...pupilSegs {
                 let t = Double(i) / Double(pupilSegs)
                 let angle = t * .pi * 2
-                let irregularity = sin(angle * 8 + time * 0.15) * pupilR * 0.03
-                    + sin(angle * 13) * pupilR * 0.02
+                let irregularity = sin(angle * 8 + time * 0.15) * pupilR * 0.04
+                    + sin(angle * 13 + time * 0.08) * pupilR * 0.025
+                    + sin(angle * 21) * pupilR * 0.015     // more alien irregularity
                 let r = pupilR + irregularity
                 let pt = CGPoint(
                     x: center.x + cos(angle) * r,
@@ -487,28 +596,30 @@ struct AnemoneView_iOS: View {
 
             pCtx.fill(pupilPath, with: .color(Color(hex: "010102")))
 
-            // Soft pupil edge glow (fibers meeting the pupil)
+            // Inner bioluminescent glow from pupil (alien light within)
             pCtx.drawLayer { peCtx in
                 peCtx.blendMode = .screen
+                let innerGlowR = pupilR * 1.4
+                let glowIntensity = 0.12 + pulse * 0.06 + tI * 0.08
                 peCtx.fill(
                     Circle().path(in: CGRect(
-                        x: center.x - pupilR * 1.15, y: center.y - pupilR * 1.15,
-                        width: pupilR * 2.3, height: pupilR * 2.3
+                        x: center.x - innerGlowR, y: center.y - innerGlowR,
+                        width: innerGlowR * 2, height: innerGlowR * 2
                     )),
                     with: .radialGradient(
                         Gradient(colors: [
-                            .clear,
-                            innerColor.opacity(0.15),
-                            innerColor.opacity(0.08),
+                            outerColor.opacity(glowIntensity * 0.4),
+                            innerColor.opacity(glowIntensity),
+                            innerColor.opacity(glowIntensity * 0.5),
                             .clear
                         ]),
-                        center: center, startRadius: pupilR * 0.85, endRadius: pupilR * 1.2
+                        center: center, startRadius: pupilR * 0.6, endRadius: innerGlowR
                     )
                 )
             }
         }
 
-        // ── Layer 9: Ambient glow (extends beyond iris) ──
+        // ── Layer 10: Ambient glow (extends beyond iris) ──
         let glowR = irisR * 1.6
         ctx.drawLayer { gCtx in
             gCtx.blendMode = .screen
@@ -519,8 +630,8 @@ struct AnemoneView_iOS: View {
                 )),
                 with: .radialGradient(
                     Gradient(colors: [
-                        outerColor.opacity(0.10 * (0.6 + pulse * 0.4)),
-                        outerColor.opacity(0.03),
+                        outerColor.opacity((0.08 + tI * 0.04) * (0.6 + pulse * 0.4)),
+                        outerColor.opacity(0.02),
                         .clear
                     ]),
                     center: center, startRadius: irisR * 0.5, endRadius: glowR
@@ -528,7 +639,24 @@ struct AnemoneView_iOS: View {
             )
         }
 
-        // ── Layer 10: High-usage pulse ──
+        // ── Layer 11: Touch pulse ring (expanding ring on touch) ──
+        if tI > 0.01 {
+            let ringR = irisR * (1.1 + tI * 0.3)
+            ctx.drawLayer { rCtx in
+                rCtx.blendMode = .screen
+                let ringRect = CGRect(
+                    x: center.x - ringR, y: center.y - ringR,
+                    width: ringR * 2, height: ringR * 2
+                )
+                rCtx.stroke(
+                    Circle().path(in: ringRect),
+                    with: .color(outerColor.opacity(0.15 * tI)),
+                    lineWidth: 1.5
+                )
+            }
+        }
+
+        // ── Layer 12: High-usage pulse ──
         let maxPct = max(state.fiveHourPct, state.sonnetPct, state.sevenDayPct)
         if maxPct > 80 {
             let urgency = (maxPct - 80) / 20.0
@@ -548,30 +676,30 @@ struct AnemoneView_iOS: View {
             }
         }
 
-        // ── Layer 11: Specular highlights ──
+        // ── Layer 13: Specular highlights (softer, organic wet sheen) ──
         let specX = center.x - irisR * 0.22
         let specY = center.y - irisR * 0.22
-        let specR = irisR * 0.10
+        let specR = irisR * 0.12
         ctx.fill(
             Circle().path(in: CGRect(
                 x: specX - specR, y: specY - specR,
                 width: specR * 2, height: specR * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.5), .white.opacity(0.08), .clear]),
+                Gradient(colors: [.white.opacity(0.30), .white.opacity(0.05), .clear]),
                 center: CGPoint(x: specX, y: specY), startRadius: 0, endRadius: specR
             )
         )
         let spec2X = center.x + irisR * 0.15
         let spec2Y = center.y + irisR * 0.10
-        let spec2R = irisR * 0.05
+        let spec2R = irisR * 0.06
         ctx.fill(
             Circle().path(in: CGRect(
                 x: spec2X - spec2R, y: spec2Y - spec2R,
                 width: spec2R * 2, height: spec2R * 2
             )),
             with: .radialGradient(
-                Gradient(colors: [.white.opacity(0.25), .clear]),
+                Gradient(colors: [.white.opacity(0.15), .clear]),
                 center: CGPoint(x: spec2X, y: spec2Y), startRadius: 0, endRadius: spec2R
             )
         )
@@ -587,6 +715,7 @@ struct AnemoneView_iOS: View {
         let pulse = (sin(time * 1.2) + 1) / 2
         let activity = state.overallUtilization / 100.0
         let collarColor = irisBaseColor(activity: activity)
+        let tI = touchState.intensity
 
         ctx.drawLayer { cCtx in
             cCtx.blendMode = .screen
@@ -597,7 +726,7 @@ struct AnemoneView_iOS: View {
             )
             cCtx.stroke(
                 Circle().path(in: ringRect),
-                with: .color(collarColor.opacity(0.15 + pulse * 0.08)),
+                with: .color(collarColor.opacity(0.15 + pulse * 0.08 + tI * 0.06)),
                 lineWidth: 2.5
             )
 
@@ -610,7 +739,7 @@ struct AnemoneView_iOS: View {
                 with: .radialGradient(
                     Gradient(colors: [
                         .clear,
-                        collarColor.opacity(0.06),
+                        collarColor.opacity(0.06 + tI * 0.03),
                         collarColor.opacity(0.03),
                         .clear
                     ]),
@@ -639,16 +768,32 @@ struct AnemoneView_iOS: View {
         let perpX = cos(perp)
         let perpY = sin(perp)
         let seed = Double(desc.id.hashValue & 0xFFFF) * 0.001
+        let tI = touchState.intensity
 
-        // 4a: Compute 20 spine points with 3-harmonic wave sway
+        // 4a: Compute 20 spine points with 3-harmonic wave sway + touch attraction
         var points: [CGPoint] = []
         for s in 0...segments {
             let t = Double(s) / Double(segments)
             let wave = sin(time * waveSpeed + seed + t * 6) * t * maxR * 0.12
                 + sin(time * waveSpeed * 1.7 + seed + t * 4) * t * maxR * 0.04
                 + sin(time * waveSpeed * 0.6 + seed * 2.3 + t * 9) * t * maxR * 0.02
-            let px = center.x + cos(angle) * (collarR + tentacleLen * t) + perpX * wave
-            let py = center.y + sin(angle) * (collarR + tentacleLen * t) + perpY * wave
+            var px = center.x + cos(angle) * (collarR + tentacleLen * t) + perpX * wave
+            var py = center.y + sin(angle) * (collarR + tentacleLen * t) + perpY * wave
+
+            // Touch attraction: tentacles lean toward finger
+            if tI > 0.01 {
+                let dx = touchState.location.x - px
+                let dy = touchState.location.y - py
+                let dist = sqrt(dx * dx + dy * dy)
+                let maxInfluence = maxR * 2.0
+                if dist > 1 && dist < maxInfluence {
+                    let falloff = 1.0 - dist / maxInfluence
+                    let force = falloff * falloff * tI * t * 18  // stronger on tips
+                    px += (dx / dist) * force
+                    py += (dy / dist) * force
+                }
+            }
+
             points.append(CGPoint(x: px, y: py))
         }
 
@@ -676,7 +821,7 @@ struct AnemoneView_iOS: View {
             var glowPath = Path()
             glowPath.move(to: points[0])
             for s in 1...segments { glowPath.addLine(to: points[s]) }
-            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08)), lineWidth: 14)
+            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 14)
         }
 
         // 4c: Double-helix DNA strands with 3-zone color gradient
@@ -732,8 +877,8 @@ struct AnemoneView_iOS: View {
             var innerPath = Path()
             innerPath.move(to: points[0])
             for s in 1...segments { innerPath.addLine(to: points[s]) }
-            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08)), lineWidth: 2.5)
-            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10)), lineWidth: 0.8)
+            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 2.5)
+            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10 + tI * 0.05)), lineWidth: 0.8)
         }
 
         // 4e: Photophore nodes at segments 4, 8, 12, 16
@@ -773,7 +918,6 @@ struct AnemoneView_iOS: View {
                 )
             )
 
-            // Store mid-point hit targets
             hitCache.midpoints.append(HitCache.Target(
                 label: desc.label, pct: desc.pct, reset: desc.reset,
                 position: points[s], id: desc.id, radius: 24
@@ -904,6 +1048,7 @@ struct AnemoneView_iOS: View {
         ctx: inout GraphicsContext, spines: [[CGPoint]], time: Double
     ) {
         guard spines.count >= 2 else { return }
+        let tI = touchState.intensity
 
         ctx.drawLayer { wCtx in
             wCtx.blendMode = .screen
@@ -923,7 +1068,7 @@ struct AnemoneView_iOS: View {
                 webPath.closeSubpath()
 
                 let breathe = (sin(time * 0.8 + Double(i) * 0.5) + 1) / 2
-                wCtx.fill(webPath, with: .color(Theme.nucleusCool.opacity(0.012 + breathe * 0.008)))
+                wCtx.fill(webPath, with: .color(Theme.nucleusCool.opacity(0.012 + breathe * 0.008 + tI * 0.006)))
             }
         }
     }
@@ -936,13 +1081,27 @@ struct AnemoneView_iOS: View {
             Theme.outerOrbit,     // gold
             Theme.weeklyOrbit,    // lavender
         ]
+        let tI = touchState.intensity
 
         for spore in spores {
             let color = sporeColors[Int(abs(spore.seed)) % sporeColors.count]
             let rawY = fmod(time * spore.cycleSpeed + spore.seed * 0.1, 1.0)
-            let y = size.height - rawY * size.height * 0.9
+            var y = size.height - rawY * size.height * 0.9
             let wander = sin(time * 0.4 + spore.seed) * 20
-            let x = spore.baseX * size.width + wander
+            var x = spore.baseX * size.width + wander
+
+            // Touch scatter: spores flee from finger
+            if tI > 0.01 {
+                let dx = x - touchState.location.x
+                let dy = y - touchState.location.y
+                let dist = sqrt(dx * dx + dy * dy)
+                let scatterR: Double = 120
+                if dist > 1 && dist < scatterR {
+                    let push = (1.0 - dist / scatterR) * tI * 35
+                    x += (dx / dist) * push
+                    y += (dy / dist) * push
+                }
+            }
 
             let fade = min(rawY / 0.1, (1 - rawY) / 0.1, 1.0)
             let sporeR = 2.5 + sin(spore.seed + time * 0.8) * 1.0
