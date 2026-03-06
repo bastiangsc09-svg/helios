@@ -1331,15 +1331,53 @@ struct AnemoneView_iOS: View {
         }
         .padding(.horizontal, expanded ? 24 : 16)
         .padding(.vertical, expanded ? 14 : 10)
+        // Layer 1: Subtle dark glass fill for depth
+        .background(Color.black.opacity(0.25), in: Capsule())
+        // Layer 2: Diffuse outer plasma glow (wide, faint)
+        .background(
+            Capsule()
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Theme.sessionOrbit.opacity(0.15),
+                            Theme.weeklyOrbit.opacity(0.1),
+                            Theme.outerOrbit.opacity(0.15),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 4
+                )
+                .blur(radius: 6)
+        )
+        // Layer 3: Mid plasma band (medium width, more visible)
         .overlay(
             Capsule()
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Theme.sessionOrbit.opacity(0.5),
-                            Theme.weeklyOrbit.opacity(0.3),
-                            Theme.outerOrbit.opacity(0.5),
-                            Theme.sessionOrbit.opacity(0.3),
+                            Theme.sessionOrbit.opacity(0.35),
+                            Theme.weeklyOrbit.opacity(0.2),
+                            Theme.outerOrbit.opacity(0.35),
+                            Theme.sessionOrbit.opacity(0.2),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+                .blur(radius: 1.5)
+        )
+        // Layer 4: Sharp bright core border (the plasma wire)
+        .overlay(
+            Capsule()
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Theme.sessionOrbit.opacity(0.6),
+                            Theme.weeklyOrbit.opacity(0.35),
+                            Theme.outerOrbit.opacity(0.6),
+                            Theme.sessionOrbit.opacity(0.35),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -1347,8 +1385,40 @@ struct AnemoneView_iOS: View {
                     lineWidth: 0.75
                 )
         )
-        .shadow(color: Theme.sessionOrbit.opacity(0.15), radius: 8)
-        .shadow(color: Theme.weeklyOrbit.opacity(0.08), radius: 16)
+        // Layer 5: Top-edge specular highlight (light catching the surface)
+        .overlay(
+            Capsule()
+                .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
+                .mask(
+                    LinearGradient(
+                        colors: [.white, .clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        )
+        // Layer 6: Inner edge glow (plasma glow inside the capsule)
+        .overlay(
+            Capsule()
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Theme.sessionOrbit.opacity(0.08),
+                            Theme.outerOrbit.opacity(0.05),
+                            Theme.weeklyOrbit.opacity(0.08),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    lineWidth: 8
+                )
+                .blur(radius: 8)
+                .clipShape(Capsule())
+        )
+        // Emission glow — multi-layer plasma bloom
+        .shadow(color: Theme.sessionOrbit.opacity(0.2), radius: 6)
+        .shadow(color: Theme.weeklyOrbit.opacity(0.12), radius: 14)
+        .shadow(color: Theme.outerOrbit.opacity(0.08), radius: 24)
         .contentShape(Capsule())
         .onTapGesture {
             withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
