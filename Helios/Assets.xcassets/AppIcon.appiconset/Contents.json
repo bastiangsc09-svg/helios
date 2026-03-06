@@ -2,18 +2,6 @@
   "images" : [
     {
       "filename" : "icon.png",
-      "idiom" : "iphone",
-      "scale" : "2x",
-      "size" : "60x60"
-    },
-    {
-      "filename" : "icon.png",
-      "idiom" : "iphone",
-      "scale" : "3x",
-      "size" : "60x60"
-    },
-    {
-      "filename" : "icon.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
