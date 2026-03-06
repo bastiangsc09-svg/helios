@@ -34,6 +34,49 @@ private final class TouchState {
     }
 }
 
+// MARK: - Drag State (spring physics for draggable anemone)
+
+private final class DragState {
+    var offset: CGPoint = .zero         // current displacement from home
+    var velocity: CGPoint = .zero       // px/s
+    var isDragging: Bool = false
+    var grabOffset: CGPoint = .zero     // finger offset from center at grab start
+    private var lastTime: Double = 0
+
+    // Spring parameters — tuned for slow, organic return
+    private let stiffness: Double = 3.0     // low = slow return
+    private let damping: Double = 0.88      // high = less oscillation (0-1)
+
+    func update(time: Double) {
+        let dt = lastTime == 0 ? 1.0 / 30.0 : min(time - lastTime, 0.1)
+        lastTime = time
+
+        guard !isDragging else { return }
+
+        // Spring force toward origin
+        let fx = -offset.x * stiffness
+        let fy = -offset.y * stiffness
+        velocity.x += fx * dt
+        velocity.y += fy * dt
+
+        // Damping (friction)
+        velocity.x *= pow(damping, dt * 60)     // frame-rate independent
+        velocity.y *= pow(damping, dt * 60)
+
+        // Integrate
+        offset.x += velocity.x * dt
+        offset.y += velocity.y * dt
+
+        // Snap to zero when close + slow (avoid perpetual micro-drift)
+        let dist = hypot(offset.x, offset.y)
+        let speed = hypot(velocity.x, velocity.y)
+        if dist < 0.5 && speed < 1.0 {
+            offset = .zero
+            velocity = .zero
+        }
+    }
+}
+
 // MARK: - Tentacle Descriptor
 
 private struct TentacleDesc {
@@ -73,6 +116,7 @@ struct AnemoneView_iOS: View {
 
     private let hitCache = HitCache()
     private let touchState = TouchState()
+    private let dragState = DragState()
 
     var body: some View {
         GeometryReader { geo in
@@ -85,7 +129,11 @@ struct AnemoneView_iOS: View {
                 ZStack {
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         let t = timeline.date.timeIntervalSinceReferenceDate
-                        let center = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
+                        let defaultCenter = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
+                        let center = CGPoint(
+                            x: defaultCenter.x + dragState.offset.x,
+                            y: defaultCenter.y + dragState.offset.y
+                        )
 
                         Canvas { ctx, size in
                             drawSpores(ctx: &ctx, size: size, time: t)
@@ -97,18 +145,59 @@ struct AnemoneView_iOS: View {
                     }
                     .allowsHitTesting(false)
 
-                    // Touch detection (drag for continuous tracking, tap for tooltips)
+                    // Touch detection (drag for move + reactive effects + tooltips)
                     Color.clear
                         .contentShape(Rectangle())
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
+                                    let defaultCenter = CGPoint(x: geo.size.width / 2, y: orreryHeight / 2)
+                                    let currentCenter = CGPoint(
+                                        x: defaultCenter.x + dragState.offset.x,
+                                        y: defaultCenter.y + dragState.offset.y
+                                    )
+                                    let bodyRadius = maxR * 0.5
+
+                                    // On first touch, decide if we're grabbing the body
+                                    if !dragState.isDragging && !touchState.isActive {
+                                        let dx = value.startLocation.x - currentCenter.x
+                                        let dy = value.startLocation.y - currentCenter.y
+                                        let dist = hypot(dx, dy)
+                                        if dist < bodyRadius {
+                                            dragState.isDragging = true
+                                            dragState.velocity = .zero
+                                            dragState.grabOffset = CGPoint(
+                                                x: value.startLocation.x - currentCenter.x,
+                                                y: value.startLocation.y - currentCenter.y
+                                            )
+                                        }
+                                    }
+
+                                    // Move mode: update anemone position
+                                    if dragState.isDragging {
+                                        dragState.offset = CGPoint(
+                                            x: value.location.x - defaultCenter.x - dragState.grabOffset.x,
+                                            y: value.location.y - defaultCenter.y - dragState.grabOffset.y
+                                        )
+                                    }
+
+                                    // Always update touch state for reactive effects
                                     touchState.location = value.location
                                     touchState.isActive = true
                                 }
                                 .onEnded { value in
                                     touchState.isActive = false
-                                    // Short drags = taps → show tooltip
+
+                                    if dragState.isDragging {
+                                        // Transfer gesture velocity to spring physics
+                                        dragState.velocity = CGPoint(
+                                            x: value.predictedEndLocation.x - value.location.x,
+                                            y: value.predictedEndLocation.y - value.location.y
+                                        )
+                                        dragState.isDragging = false
+                                    }
+
+                                    // Short drags = taps → show tooltip (only if not moving)
                                     let dragDist = hypot(
                                         value.location.x - value.startLocation.x,
                                         value.location.y - value.startLocation.y
@@ -204,6 +293,8 @@ struct AnemoneView_iOS: View {
 
         // Update touch intensity (smooth ramp/decay)
         touchState.update(time: time)
+        // Update drag spring physics (spring-back when released)
+        dragState.update(time: time)
 
         // Pass 1: Ambient halo
         drawHalo(ctx: &ctx, center: center, maxR: maxR, activity: activity, time: time)
