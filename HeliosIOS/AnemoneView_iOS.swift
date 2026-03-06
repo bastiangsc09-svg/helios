@@ -45,9 +45,9 @@ private final class DragState {
     private var lastTime: Double = 0
     private var prevOffset: CGPoint = .zero
 
-    // Spring parameters — very sticky, snaps back fast
-    private let stiffness: Double = 22.0    // high = snaps back fast
-    private let damping: Double = 0.78      // slight bounce for organic feel
+    // Spring parameters — extremely sticky, rubber band snap-back
+    private let stiffness: Double = 35.0    // very high = instant snap-back
+    private let damping: Double = 0.75      // slight bounce for organic feel
 
     func update(time: Double) {
         let dt = lastTime == 0 ? 1.0 / 30.0 : min(time - lastTime, 0.1)
@@ -888,7 +888,7 @@ struct AnemoneView_iOS: View {
             var py = center.y + sin(angle) * (collarR + tentacleLen * t) + perpY * wave
 
             // Drag inertia: whole tentacle trails behind movement (like dragging through water)
-            let trailFactor = t * 0.055  // linear — entire tentacle trails, tips most
+            let trailFactor = t * 0.12  // linear, strong — entire tentacle visibly trails
             px -= dragState.smoothVelocity.x * trailFactor
             py -= dragState.smoothVelocity.y * trailFactor
 
