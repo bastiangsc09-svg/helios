@@ -41,15 +41,34 @@ private final class DragState {
     var velocity: CGPoint = .zero       // px/s
     var isDragging: Bool = false
     var grabOffset: CGPoint = .zero     // finger offset from center at grab start
+    var smoothVelocity: CGPoint = .zero // smoothed velocity for tentacle trailing
     private var lastTime: Double = 0
+    private var prevOffset: CGPoint = .zero
 
-    // Spring parameters — tuned for slow, organic return
-    private let stiffness: Double = 3.0     // low = slow return
-    private let damping: Double = 0.88      // high = less oscillation (0-1)
+    // Spring parameters — sticky, fast return
+    private let stiffness: Double = 14.0    // high = snaps back fast
+    private let damping: Double = 0.80      // slight bounce for organic feel
 
     func update(time: Double) {
         let dt = lastTime == 0 ? 1.0 / 30.0 : min(time - lastTime, 0.1)
         lastTime = time
+
+        // Compute instantaneous velocity from offset change (works during drag AND spring-back)
+        let instantVx = (offset.x - prevOffset.x) / max(dt, 0.001)
+        let instantVy = (offset.y - prevOffset.y) / max(dt, 0.001)
+        prevOffset = offset
+
+        // Smooth the velocity (exponential moving average) for organic tentacle trailing
+        let smoothing = 0.15  // lower = smoother/laggier
+        smoothVelocity.x += (instantVx - smoothVelocity.x) * smoothing
+        smoothVelocity.y += (instantVy - smoothVelocity.y) * smoothing
+
+        // Decay smooth velocity when nearly stopped
+        let smoothSpeed = hypot(smoothVelocity.x, smoothVelocity.y)
+        if smoothSpeed < 2.0 {
+            smoothVelocity.x *= 0.9
+            smoothVelocity.y *= 0.9
+        }
 
         guard !isDragging else { return }
 
@@ -60,17 +79,17 @@ private final class DragState {
         velocity.y += fy * dt
 
         // Damping (friction)
-        velocity.x *= pow(damping, dt * 60)     // frame-rate independent
+        velocity.x *= pow(damping, dt * 60)
         velocity.y *= pow(damping, dt * 60)
 
         // Integrate
         offset.x += velocity.x * dt
         offset.y += velocity.y * dt
 
-        // Snap to zero when close + slow (avoid perpetual micro-drift)
+        // Snap to zero when close + slow
         let dist = hypot(offset.x, offset.y)
         let speed = hypot(velocity.x, velocity.y)
-        if dist < 0.5 && speed < 1.0 {
+        if dist < 0.3 && speed < 0.5 {
             offset = .zero
             velocity = .zero
         }
@@ -867,6 +886,11 @@ struct AnemoneView_iOS: View {
                 + sin(time * waveSpeed * 0.6 + seed * 2.3 + t * 9) * t * maxR * 0.02
             var px = center.x + cos(angle) * (collarR + tentacleLen * t) + perpX * wave
             var py = center.y + sin(angle) * (collarR + tentacleLen * t) + perpY * wave
+
+            // Drag inertia: tentacles trail behind movement (like dragging through water)
+            let trailFactor = t * t * 0.035  // quadratic — tips trail much more than base
+            px -= dragState.smoothVelocity.x * trailFactor
+            py -= dragState.smoothVelocity.y * trailFactor
 
             // Touch attraction: tentacles lean toward finger
             if tI > 0.01 {
