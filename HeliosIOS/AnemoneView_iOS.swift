@@ -261,7 +261,8 @@ struct AnemoneView_iOS: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
                 }
             }
         }
@@ -1294,7 +1295,8 @@ struct AnemoneView_iOS: View {
             .foregroundStyle(Theme.stardust)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .glassEffect(.regular, in: .capsule)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
             .offset(y: -36)
     }
 
@@ -1329,7 +1331,9 @@ struct AnemoneView_iOS: View {
         }
         .padding(.horizontal, expanded ? 24 : 16)
         .padding(.vertical, expanded ? 14 : 10)
-        .glassEffect(.regular, in: .capsule)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
+        .shadow(color: .white.opacity(0.04), radius: 12)
         .contentShape(Capsule())
         .onTapGesture {
             withAnimation(.spring(duration: 0.4, bounce: 0.15)) {

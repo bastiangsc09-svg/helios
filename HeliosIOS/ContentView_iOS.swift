@@ -21,9 +21,11 @@ struct ContentView_iOS: View {
                         } label: {
                             Image(systemName: "gearshape.fill")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.white.opacity(0.9))
                                 .frame(width: 40, height: 40)
-                                .glassEffect(.regular.interactive(), in: .circle)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .overlay(Circle().strokeBorder(.white.opacity(0.35), lineWidth: 0.5))
+                                .shadow(color: .white.opacity(0.06), radius: 8)
                         }
                         .padding(.trailing, 16)
                         .padding(.top, 8)
@@ -61,7 +63,9 @@ struct ContentView_iOS: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 28)
                             .padding(.vertical, 14)
-                            .glassEffect(.regular.tint(Theme.sessionOrbit).interactive(), in: .capsule)
+                            .background(Theme.sessionOrbit.opacity(0.2), in: Capsule())
+                            .background(.ultraThinMaterial, in: Capsule())
+                            .overlay(Capsule().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
                     }
 
                     Spacer()
