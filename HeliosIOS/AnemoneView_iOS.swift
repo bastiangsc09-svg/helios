@@ -155,6 +155,7 @@ struct AnemoneView_iOS: View {
                 }
             }
         }
+        .ignoresSafeArea()
         .sheet(isPresented: $showStats) {
             StatsView_iOS(state: state)
         }
