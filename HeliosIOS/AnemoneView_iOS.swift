@@ -1004,7 +1004,7 @@ struct AnemoneView_iOS: View {
             var glowPath = Path()
             glowPath.move(to: points[0])
             for s in 1...segments { glowPath.addLine(to: points[s]) }
-            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 14 * thk)
+            gCtx.stroke(glowPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 14 * (0.6 + thk * 0.4))
         }
 
         // 4c: Double-helix DNA strands with 3-zone color gradient
@@ -1060,8 +1060,8 @@ struct AnemoneView_iOS: View {
             var innerPath = Path()
             innerPath.move(to: points[0])
             for s in 1...segments { innerPath.addLine(to: points[s]) }
-            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 2.5 * thk)
-            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10 + tI * 0.05)), lineWidth: 0.8 * thk)
+            iCtx.stroke(innerPath, with: .color(desc.tipColor.opacity(0.08 + tI * 0.04)), lineWidth: 2.5 * (0.6 + thk * 0.4))
+            iCtx.stroke(innerPath, with: .color(.white.opacity(0.10 + tI * 0.05)), lineWidth: 0.8 * (0.6 + thk * 0.4))
         }
 
         // 4e: Photophore nodes at segments 4, 8, 12, 16
@@ -1069,7 +1069,7 @@ struct AnemoneView_iOS: View {
         for s in stride(from: nodeInterval, through: segments - 2, by: nodeInterval) {
             let t = Double(s) / Double(segments)
             let nodePulse = (sin(time * (2.0 + Double(s) * 0.3) + seed * Double(s)) + 1) / 2
-            let nodeR = 2.0 + nodePulse * 1.5 + norm * 1.0
+            let nodeR = (2.0 + nodePulse * 1.5 + norm * 1.0) * thk
             let nColor: Color = t < 0.5 ? desc.midColor : desc.tipColor
 
             ctx.fill(
@@ -1127,9 +1127,9 @@ struct AnemoneView_iOS: View {
             var filPath = Path()
             filPath.move(to: attachPt)
             filPath.addQuadCurve(to: filEnd, control: filCtrl)
-            ctx.stroke(filPath, with: .color(desc.tipColor.opacity(0.2)), lineWidth: 1)
+            ctx.stroke(filPath, with: .color(desc.tipColor.opacity(0.2)), lineWidth: 1 * thk)
 
-            let ftR = 2.0 + sin(time * 2 + Double(f) * 1.5) * 0.5
+            let ftR = (2.0 + sin(time * 2 + Double(f) * 1.5) * 0.5) * thk
             ctx.fill(
                 Circle().path(in: CGRect(
                     x: filEnd.x - ftR, y: filEnd.y - ftR,
@@ -1144,7 +1144,7 @@ struct AnemoneView_iOS: View {
 
         // 4g: Bulbous tip (3-layer)
         let tipPt = points[segments]
-        let tipR = 3.0 + norm * 8.0
+        let tipR = (3.0 + norm * 8.0) * thk
         let tipPulse = (sin(time * (2.0 + norm * 2.0) + seed) + 1) / 2
 
         // Layer 1: Wide bloom
