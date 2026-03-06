@@ -11,6 +11,8 @@ struct SettingsView_iOS: View {
     @State private var showScanner = false
     @State private var testResult: (success: Bool, message: String)?
     @State private var isTesting = false
+    @AppStorage("irisScale") private var irisScale: Double = 1.0
+    @AppStorage("tentacleScale") private var tentacleScale: Double = 1.0
 
     var body: some View {
         NavigationStack {
@@ -27,6 +29,9 @@ struct SettingsView_iOS: View {
 
                         // Refresh interval card
                         refreshCard
+
+                        // Appearance card
+                        appearanceCard
                     }
                     .padding(20)
                 }
@@ -179,6 +184,58 @@ struct SettingsView_iOS: View {
             .pickerStyle(.segmented)
             .onChange(of: refreshInterval) {
                 save()
+            }
+        }
+        .padding(24)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.white.opacity(0.1), lineWidth: 0.5))
+    }
+
+    // MARK: - Appearance Card
+
+    private var appearanceCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Appearance")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.stardust)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Iris Size")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.stardust.opacity(0.7))
+                    Spacer()
+                    Text("\(Int(irisScale * 100))%")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(Theme.sessionOrbit)
+                }
+                Slider(value: $irisScale, in: 0.5...2.0, step: 0.05)
+                    .tint(Theme.sessionOrbit)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Tentacle Size")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.stardust.opacity(0.7))
+                    Spacer()
+                    Text("\(Int(tentacleScale * 100))%")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(Theme.weeklyOrbit)
+                }
+                Slider(value: $tentacleScale, in: 0.3...2.5, step: 0.05)
+                    .tint(Theme.weeklyOrbit)
+            }
+
+            Button {
+                withAnimation(.spring(duration: 0.3)) {
+                    irisScale = 1.0
+                    tentacleScale = 1.0
+                }
+            } label: {
+                Text("Reset to Default")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.5))
             }
         }
         .padding(24)

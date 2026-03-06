@@ -124,6 +124,8 @@ struct AnemoneView_iOS: View {
     @State private var tapped: HitCache.Target?
     @State private var expanded = false
     @State private var showStats = false
+    @AppStorage("irisScale") private var irisScale: Double = 1.0
+    @AppStorage("tentacleScale") private var tentacleScale: Double = 1.0
     @State private var spores: [Spore] = (0..<25).map { i in
         let seed = Double(i) * 137.508
         return Spore(
@@ -485,7 +487,7 @@ struct AnemoneView_iOS: View {
         maxR: Double, activity: Double, time: Double
     ) {
         let tI = touchState.intensity
-        let irisR = maxR * 0.34
+        let irisR = maxR * 0.34 * irisScale
         // Pupil dilates with usage AND touch
         let pupilR = irisR * (0.28 + activity * 0.12 + tI * 0.08)
         let collaretteR = irisR * 0.48
@@ -886,7 +888,7 @@ struct AnemoneView_iOS: View {
         ctx: inout GraphicsContext, center: CGPoint,
         maxR: Double, time: Double
     ) {
-        let collarR = maxR * 0.37
+        let collarR = maxR * 0.37 * irisScale
         let pulse = (sin(time * 1.2) + 1) / 2
         let activity = state.overallUtilization / 100.0
         let collarColor = irisBaseColor(activity: activity)
@@ -934,8 +936,8 @@ struct AnemoneView_iOS: View {
     ) -> [CGPoint] {
         let pct = desc.pct
         let norm = pct / 100.0
-        let collarR = maxR * 0.37
-        let tentacleLen = maxR * (0.15 + norm * 0.85)
+        let collarR = maxR * 0.37 * irisScale
+        let tentacleLen = maxR * (0.15 + norm * 0.85) * tentacleScale
         let waveSpeed = 0.5 + norm * 1.5
         let angle = desc.angle
         let segments = 20
