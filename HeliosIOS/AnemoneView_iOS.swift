@@ -94,14 +94,12 @@ struct AnemoneView_iOS: View {
                                 time: t
                             )
                         }
-                        .frame(height: orreryHeight)
                     }
                     .allowsHitTesting(false)
 
                     // Touch detection (drag for continuous tracking, tap for tooltips)
                     Color.clear
                         .contentShape(Rectangle())
-                        .frame(height: orreryHeight)
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
@@ -129,8 +127,6 @@ struct AnemoneView_iOS: View {
                             .allowsHitTesting(false)
                     }
                 }
-                .frame(height: orreryHeight)
-                .frame(maxHeight: .infinity, alignment: .top)
 
                 // Readout bar
                 VStack {
