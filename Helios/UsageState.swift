@@ -24,6 +24,12 @@ final class UsageState {
     var organizationID: String = ""
     var adminAPIKey: String = ""
     var refreshInterval: RefreshInterval = .twoMinutes
+    var liteMode: Bool = UserDefaults.standard.bool(forKey: "heliosLiteMode") {
+        didSet {
+            UserDefaults.standard.set(liteMode, forKey: "heliosLiteMode")
+            NotificationCenter.default.post(name: .heliosLiteModeChanged, object: nil)
+        }
+    }
 
     // MARK: - Computed — Session Data
 

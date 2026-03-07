@@ -18,6 +18,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             Form {
+                modeSection
                 sessionSection
                 adminSection
                 refreshSection
@@ -27,6 +28,25 @@ struct SettingsView: View {
             .onAppear { loadFromState() }
         }
         .frame(width: 480, height: 520)
+    }
+
+    // MARK: - Display Mode Section
+
+    private var modeSection: some View {
+        Section {
+            Toggle("Lite Mode (menu bar only)", isOn: Binding(
+                get: { state.liteMode },
+                set: { state.liteMode = $0 }
+            ))
+
+            Text(state.liteMode
+                ? "Shows percentages and reset timers in the menu bar. No dashboard window."
+                : "Full orrery dashboard with menu bar status.")
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("Display Mode")
+        }
     }
 
     // MARK: - Session Cookie Section

@@ -1,84 +1,139 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Menu Bar Controller (AppDelegate)
+extension Notification.Name {
+    static let heliosLiteModeChanged = Notification.Name("heliosLiteModeChanged")
+}
 
 final class MenuBarController: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
-    private var popover: NSPopover?
     private var renderTimer: Timer?
     private var state: UsageState?
     private var engine: UsageEngine?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-
         setupStatusItem()
-        setupPopover()
         startRenderTimer()
+
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handleModeChange),
+            name: .heliosLiteModeChanged, object: nil
+        )
     }
 
     func configure(state: UsageState, engine: UsageEngine) {
         self.state = state
         self.engine = engine
+        updateStatusItemImage()
+
+        if state.liteMode {
+            DispatchQueue.main.async { self.closeDashboard() }
+        }
     }
 
     // MARK: - Status Item
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem?.button?.action = #selector(togglePopover)
         statusItem?.button?.target = self
+        statusItem?.button?.action = #selector(statusItemClicked(_:))
+        statusItem?.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         updateStatusItemImage()
     }
 
-    private func setupPopover() {
-        popover = NSPopover()
-        popover?.behavior = .transient
-        popover?.contentSize = NSSize(width: 280, height: 320)
-        popover?.animates = true
-        popover?.appearance = NSAppearance(named: .darkAqua)
+    @objc private func statusItemClicked(_ sender: Any?) {
+        showMenu()
     }
 
-    @objc private func togglePopover() {
-        guard let button = statusItem?.button, let popover else { return }
+    private func showMenu() {
+        let menu = NSMenu()
+        let isLite = state?.liteMode ?? false
 
-        if popover.isShown {
-            popover.performClose(nil)
+        if isLite {
+            let item = NSMenuItem(title: "Open Dashboard", action: #selector(switchToOrrery), keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
         } else {
-            if let state, let engine {
-                let hosting = NSHostingController(
-                    rootView: MenuBarPopoverContent(state: state, engine: engine)
-                        .frame(width: 280)
-                )
-                // Make hosting view transparent so the blur shows through
-                hosting.view.wantsLayer = true
-                hosting.view.layer?.backgroundColor = .clear
-                popover.contentViewController = hosting
-            }
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            let showItem = NSMenuItem(title: "Show Dashboard", action: #selector(openDashboard), keyEquivalent: "")
+            showItem.target = self
+            menu.addItem(showItem)
 
-            // Hack into the popover's private window after it appears
-            DispatchQueue.main.async {
-                guard let popoverWindow = popover.contentViewController?.view.window else { return }
-                popoverWindow.isOpaque = false
-                popoverWindow.backgroundColor = .clear
-                // Walk the view tree and reconfigure NSVisualEffectViews
-                self.configureVisualEffect(in: popoverWindow.contentView?.superview)
-            }
+            let liteItem = NSMenuItem(title: "Switch to Lite Mode", action: #selector(switchToLite), keyEquivalent: "")
+            liteItem.target = self
+            menu.addItem(liteItem)
+        }
+
+        menu.addItem(.separator())
+
+        let settingsItem = NSMenuItem(title: "Settings\u{2026}", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let refreshItem = NSMenuItem(title: "Refresh", action: #selector(refresh), keyEquivalent: "r")
+        refreshItem.target = self
+        menu.addItem(refreshItem)
+
+        menu.addItem(.separator())
+
+        let quitItem = NSMenuItem(title: "Quit Helios", action: #selector(quit), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        statusItem?.menu = menu
+        statusItem?.button?.performClick(nil)
+        DispatchQueue.main.async { self.statusItem?.menu = nil }
+    }
+
+    // MARK: - Actions
+
+    @objc private func switchToOrrery() {
+        state?.liteMode = false
+        updateStatusItemImage()
+        openDashboard()
+    }
+
+    @objc private func switchToLite() {
+        state?.liteMode = true
+        updateStatusItemImage()
+        closeDashboard()
+    }
+
+    @objc func openDashboard() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApp.windows.first(where: { $0.title == "Helios" }) {
+            window.makeKeyAndOrderFront(nil)
         }
     }
 
-    private func configureVisualEffect(in view: NSView?) {
-        guard let view else { return }
-        if let effectView = view as? NSVisualEffectView {
-            effectView.material = .popover
-            effectView.blendingMode = .behindWindow
-            effectView.state = .active
-            effectView.isEmphasized = true
+    private func closeDashboard() {
+        for window in NSApp.windows where window.title == "Helios" {
+            window.close()
         }
-        for subview in view.subviews {
-            configureVisualEffect(in: subview)
+    }
+
+    @objc private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+    }
+
+    @objc private func refresh() {
+        guard let engine else { return }
+        Task { await engine.refresh() }
+    }
+
+    @objc private func quit() {
+        NSApp.terminate(nil)
+    }
+
+    @objc private func handleModeChange() {
+        updateStatusItemImage()
+        if state?.liteMode == true {
+            closeDashboard()
         }
     }
 
@@ -90,13 +145,10 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateStatusItemImage() {
-        guard let state else {
-            statusItem?.button?.image = renderText("--", color: .tertiaryLabelColor)
-            return
-        }
+    // MARK: - Status Item Rendering
 
-        guard state.hasSessionConfig, state.error == nil else {
+    private func updateStatusItemImage() {
+        guard let state, state.hasSessionConfig, state.error == nil else {
             statusItem?.button?.image = renderText("--", color: .tertiaryLabelColor)
             return
         }
@@ -110,10 +162,14 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
             .font: NSFont.systemFont(ofSize: 10, weight: .regular),
             .foregroundColor: NSColor.tertiaryLabelColor,
         ]
+        let resetAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .regular),
+            .foregroundColor: NSColor.secondaryLabelColor,
+        ]
 
-        let metrics: [(label: String, pct: Int)] = [
-            ("5h", Int(state.fiveHourPct)),
-            ("7d", Int(state.sevenDayPct)),
+        let metrics: [(label: String, pct: Int, reset: String)] = [
+            ("5h", Int(state.fiveHourPct), state.fiveHourResetString),
+            ("7d", Int(state.sevenDayPct), state.sevenDayResetString),
         ]
 
         for (i, metric) in metrics.enumerated() {
@@ -122,6 +178,10 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
             }
             str.append(NSAttributedString(string: "\(metric.label) ", attributes: labelAttrs))
             str.append(NSAttributedString(string: "\(metric.pct)%", attributes: pctAttrs(metric.pct)))
+
+            if state.liteMode && !metric.reset.isEmpty {
+                str.append(NSAttributedString(string: " \(metric.reset)", attributes: resetAttrs))
+            }
         }
 
         let size = str.size()
@@ -160,198 +220,5 @@ final class MenuBarController: NSObject, NSApplicationDelegate {
         img.unlockFocus()
         img.isTemplate = false
         return img
-    }
-
-    func openDashboard() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { $0.title == "Helios" }) {
-            window.makeKeyAndOrderFront(nil)
-        }
-    }
-}
-
-// MARK: - Popover Content
-
-struct MenuBarPopoverContent: View {
-    let state: UsageState
-    let engine: UsageEngine
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header with mini nucleus
-            VStack(spacing: 6) {
-                MiniNucleusView(utilization: state.overallUtilization)
-                    .frame(width: 36, height: 36)
-
-                Text("Helios")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .shadow(color: .white.opacity(0.4), radius: 4)
-
-                if state.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 12, height: 12)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-
-            // Metrics
-            VStack(spacing: 10) {
-                popoverMetricRow(label: "Session (5h)", pct: Int(state.fiveHourPct), reset: state.fiveHourResetString)
-                popoverMetricRow(label: "Weekly (7d)", pct: Int(state.sevenDayPct), reset: state.sevenDayResetString)
-                popoverMetricRow(label: "Sonnet", pct: Int(state.sonnetPct), reset: nil)
-                if state.opusPct > 0 {
-                    popoverMetricRow(label: "Opus", pct: Int(state.opusPct), reset: nil)
-                }
-            }
-            .padding(.horizontal, 16)
-
-            // Last update
-            if let date = state.lastFetch {
-                Text("Updated \(date.formatted(.relative(presentation: .named)))")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.25))
-                    .padding(.top, 12)
-            }
-
-            // Frosted divider
-            Rectangle()
-                .fill(.white.opacity(0.06))
-                .frame(height: 1)
-                .padding(.top, 12)
-
-            // Actions
-            HStack(spacing: 0) {
-                popoverAction(icon: "arrow.clockwise", label: "Refresh") {
-                    Task { await engine.refresh() }
-                }
-                popoverAction(icon: "macwindow", label: "Dashboard") {
-                    (NSApp.delegate as? MenuBarController)?.openDashboard()
-                }
-                popoverAction(icon: "power", label: "Quit") {
-                    NSApp.terminate(nil)
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-        }
-        .background(Color.clear)
-    }
-
-    private func popoverMetricRow(label: String, pct: Int, reset: String?) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Text(label)
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.8))
-                    .shadow(color: .white.opacity(0.4), radius: 4)
-                Spacer()
-                if let reset, !reset.isEmpty {
-                    Text("resets in \(reset)")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.3))
-                }
-                Text("\(pct)%")
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(Color.forUtilization(Double(pct)))
-                    .shadow(color: Color.forUtilization(Double(pct)).opacity(0.5), radius: 4)
-            }
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 5)
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(Color.forUtilization(Double(pct)))
-                        .frame(width: max(0, geo.size.width * CGFloat(pct) / 100), height: 5)
-                        .shadow(color: Color.forUtilization(Double(pct)).opacity(0.6), radius: 6, y: 1)
-                }
-            }
-            .frame(height: 5)
-        }
-    }
-
-    private func popoverAction(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .medium))
-                Text(label)
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(.white.opacity(0.45))
-    }
-}
-
-// MARK: - Mini Nucleus (for popover header)
-
-struct MiniNucleusView: View {
-    let utilization: Double
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 10.0)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            let pulseScale = 1.0 + sin(t * 0.4 * .pi * 2) * 0.03
-            let rot = t * 0.03
-
-            ZStack {
-                // Soft glow
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [nucleusColor.opacity(0.2), .clear],
-                            center: .center,
-                            startRadius: 6,
-                            endRadius: 18
-                        )
-                    )
-                    .scaleEffect(pulseScale)
-                    .blendMode(.plusLighter)
-
-                // Core with texture
-                ZStack {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [coreColor, nucleusColor, nucleusColor.opacity(0.3)],
-                                center: .center,
-                                startRadius: 1,
-                                endRadius: 14
-                            )
-                        )
-
-                    Image("nucleus_texture")
-                        .resizable()
-                        .clipShape(Circle())
-                        .blendMode(.overlay)
-                        .opacity(0.5)
-                        .rotationEffect(.radians(t * 0.02))
-                }
-                .frame(width: 24, height: 24)
-                .scaleEffect(pulseScale)
-            }
-        }
-    }
-
-    private var nucleusColor: Color {
-        let t = utilization / 100.0
-        if t < 0.6 {
-            return Color.lerp(Theme.nucleusCool, Theme.nucleusWarm, t: t / 0.6)
-        } else {
-            return Color.lerp(Theme.nucleusWarm, Theme.nucleusHot, t: (t - 0.6) / 0.4)
-        }
-    }
-
-    private var coreColor: Color {
-        Color.lerp(Theme.nucleusCorona, nucleusColor, t: 0.3)
     }
 }

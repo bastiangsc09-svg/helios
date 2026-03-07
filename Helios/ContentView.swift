@@ -1,53 +1,23 @@
 import SwiftUI
 
-enum DashboardTab: String, CaseIterable {
-    case orrery = "Orrery"
-    case pulse = "Pulse"
-    case breakdown = "Breakdown"
-}
-
 struct ContentView: View {
     let state: UsageState
     let engine: UsageEngine?
-    @State private var selectedTab: DashboardTab = .orrery
     @State private var showSettings = false
-    @Namespace private var navNamespace
-    @State private var navHovered = false
 
     var body: some View {
         ZStack {
             Theme.void.ignoresSafeArea()
 
             if !state.hasSessionConfig && !showSettings {
-                // First-launch: no config yet — prompt to set up
                 setupPrompt
             } else if showSettings {
                 SettingsView(state: state, engine: engine)
             } else {
-                // Only render the active tab — inactive tabs are fully torn down
-                switch selectedTab {
-                case .orrery:
-                    OrreryView(state: state)
-                case .pulse:
-                    PulseView(state: state)
-                case .breakdown:
-                    BreakdownView(state: state)
-                }
-
-                // NavDots overlay at bottom — visible on hover
-                VStack {
-                    Spacer()
-                    NavDots(selectedTab: $selectedTab, namespace: navNamespace)
-                        .padding(.bottom, 20)
-                        .opacity(navHovered ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.25), value: navHovered)
-                }
-                .onHover { hovering in
-                    navHovered = hovering
-                }
+                OrreryView(state: state)
             }
 
-            // Gear button (top-right) — always visible except during setup prompt
+            // Gear button (top-right)
             if state.hasSessionConfig || showSettings {
                 VStack {
                     HStack {
